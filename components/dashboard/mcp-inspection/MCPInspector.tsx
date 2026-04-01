@@ -263,10 +263,11 @@ export default function MCPInspector() {
   const renderSchemaField = (key: string, schema: any) => {
     const type = schema?.type || "string";
     const description = schema?.description || "";
+    const fieldId = `schema-${key}`;
 
     return (
       <div key={key} style={styles.field}>
-        <label style={styles.fieldLabel}>
+        <label htmlFor={fieldId} style={styles.fieldLabel}>
           {key}
           {schema?.required && <span style={styles.required}> *</span>}
           <span style={styles.fieldType}> {type}</span>
@@ -274,6 +275,7 @@ export default function MCPInspector() {
         {description && <p style={styles.fieldDesc}>{description}</p>}
         {type === "boolean" ? (
           <select
+            id={fieldId}
             style={styles.input}
             value={toolArgs[key] ?? ""}
             onChange={(e) =>
@@ -286,6 +288,7 @@ export default function MCPInspector() {
           </select>
         ) : type === "number" || type === "integer" ? (
           <input
+            id={fieldId}
             style={styles.input}
             type="number"
             placeholder={key}
@@ -296,6 +299,7 @@ export default function MCPInspector() {
           />
         ) : (
           <input
+            id={fieldId}
             style={styles.input}
             type="text"
             placeholder={key}
@@ -363,8 +367,9 @@ export default function MCPInspector() {
               + New
             </button>
             <div style={{ display: 'flex', gap: 8, marginLeft: 12, alignItems: 'center' }}>
-              <label style={{ color: colors.muted, fontSize: 12, marginRight: 8 }}>Presets:</label>
+              <label htmlFor="server-presets" style={{ color: colors.muted, fontSize: 12, marginRight: 8 }}>Presets:</label>
               <select
+                id="server-presets"
                 style={styles.serverPresetDropdown}
                 value={selectedPresetId}
                 onChange={(e) => {
@@ -582,8 +587,9 @@ export default function MCPInspector() {
             </div>
             <div style={styles.modalBody}>
               <div>
-                <label style={{ fontSize: 12, color: colors.muted }}>Repository URL</label>
+                <label htmlFor="build-repo-url" style={{ fontSize: 12, color: colors.muted }}>Repository URL</label>
                 <input
+                  id="build-repo-url"
                   style={styles.input}
                   value={buildRepoUrl}
                   onChange={(e) => setBuildRepoUrl(e.target.value)}
@@ -592,8 +598,9 @@ export default function MCPInspector() {
               </div>
 
               <div>
-                <label style={{ fontSize: 12, color: colors.muted }}>MCP Type</label>
+                <label htmlFor="build-type" style={{ fontSize: 12, color: colors.muted }}>MCP Type</label>
                 <select
+                  id="build-type"
                   value={buildType}
                   onChange={(e) => setBuildType(e.target.value as any)}
                   style={styles.input}
