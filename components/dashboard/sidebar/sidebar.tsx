@@ -23,6 +23,7 @@ import { usePathname, useRouter } from "next/navigation";
 import NextLink from "next/link";
 import { createClient } from "@/utils/supabase/client";
 import type { User } from "@supabase/supabase-js";
+import { SidebarCollapse } from "./sidebar-collapse";
 
 function UserCircleIcon({ className }: { className?: string }) {
   return (
@@ -160,7 +161,7 @@ export const SidebarWrapper = () => {
       <div className={Sidebar({ expanded: sidebarOpen })}>
         <div
           className={clsx(
-            "grid min-h-0 shrink-0 grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden border-r border-[var(--sidebar-border)] bg-[var(--sidebar-bg)]",
+            "grid min-h-0 shrink-0 grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden rounded-r-[2rem] border-r border-[var(--sidebar-border)] bg-[var(--sidebar-bg)]",
             !isMdUp &&
               "fixed left-0 top-16 z-[203] h-[calc(100vh-4rem)] w-64 transition-transform duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]",
             !isMdUp &&
@@ -178,7 +179,7 @@ export const SidebarWrapper = () => {
               <>
                 <NextLink
                   href="/"
-                  className="flex min-w-0 flex-1 items-center gap-2 rounded-md py-1 pr-1 no-underline transition-colors hover:bg-[var(--sidebar-item-hover)]"
+                  className="flex min-w-0 flex-1 items-center gap-2 rounded-xl py-1 pr-1 no-underline transition-colors hover:bg-[var(--sidebar-item-hover)]"
                 >
                   <div className="shrink-0 rounded-md bg-[var(--logo-mark-bg)] p-1.5">
                     <BrandMark size={22} />
@@ -220,24 +221,30 @@ export const SidebarWrapper = () => {
                 icon={<MarketplaceIcon />}
                 href="/dashboard/marketplace"
               />
-              <SidebarItem
-                isActive={pathname === "/agent-market"}
-                title="MCP Market"
+              
+              <SidebarCollapse 
+                title="MCP" 
                 icon={<MCPIcon />}
-                href="/agent-market"
-              />
-              <SidebarItem
-                isActive={pathname === "/dashboard/mcp-inspection"}
-                title="MCP Inspector"
-                icon={<InspectIcon />}
-                href="/dashboard/mcp-inspection"
-              />
-              <SidebarItem
-                isActive={pathname === "/dashboard/mcp-scanner"}
-                title="MCP Scanner"
-                icon={<ShieldIcon />}
-                href="/dashboard/mcp-scanner"
-              />
+              >
+                <SidebarItem
+                  isActive={pathname === "/agent-market"}
+                  title="Market"
+                  icon={<MCPIcon size={18} />}
+                  href="/agent-market"
+                />
+                <SidebarItem
+                  isActive={pathname === "/dashboard/mcp-inspection"}
+                  title="Inspector"
+                  icon={<InspectIcon size={18} />}
+                  href="/dashboard/mcp-inspection"
+                />
+                <SidebarItem
+                  isActive={pathname === "/dashboard/mcp-scanner"}
+                  title="Scanner"
+                  icon={<ShieldIcon size={18} />}
+                  href="/dashboard/mcp-scanner"
+                />
+              </SidebarCollapse>
             </SidebarMenu>
           </div>
 

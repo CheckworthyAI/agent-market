@@ -36,7 +36,7 @@ export const SidebarItem = ({ icon, title, isActive, href = "" }: Props) => {
             : "text-default-600 hover:bg-[var(--sidebar-item-hover)]",
           compact
             ? "flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-xl transition-colors duration-150"
-            : "flex min-h-11 w-full cursor-pointer items-center gap-3.5 rounded-md px-2.5 py-2.5 transition-colors duration-150",
+            : "flex min-h-11 w-full cursor-pointer items-center gap-3.5 rounded-xl px-2.5 py-2.5 transition-colors duration-150",
         )}
         onClick={handleClick}
       >
