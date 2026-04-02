@@ -168,7 +168,7 @@ export const SidebarWrapper = () => {
                 ? "translate-x-0 px-2 pb-2 pt-3"
                 : "pointer-events-none -translate-x-full px-2 pb-2 pt-3"),
             isMdUp &&
-              "relative z-auto min-h-0 w-full max-w-full flex-1 translate-x-0 px-2 pb-2 pt-3 md:min-h-[calc(100vh-4rem)]",
+              "relative z-auto h-full min-h-0 w-full max-w-full translate-x-0 px-2 pb-2 pt-3",
             isMdUp && isRail && "justify-items-stretch",
             isMdUp && !isRail && "w-64",
           )}
@@ -196,12 +196,17 @@ export const SidebarWrapper = () => {
 
           <div className={Sidebar.Body({ rail: isRail })}>
             <SidebarItem
-              title="Agent AIM"
+              title="Agent Aim"
               icon={<AgentAimIcon />}
               isActive={pathname === "/dashboard/agent-aim"}
               href="/dashboard/agent-aim"
             />
-
+            {/* <SidebarItem
+              title="Workspace"
+              icon={<HomeIcon />}
+              isActive={pathname === "/dashboard/overview"}
+              href="/dashboard/overview"
+            /> */}
             <SidebarMenu title="Explore" hideLabel={isRail}>
               <SidebarItem
                 isActive={pathname === "/dashboard/agents"}

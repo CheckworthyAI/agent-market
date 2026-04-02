@@ -1,15 +1,58 @@
 "use client";
 
 import { useState } from "react";
+import clsx from "clsx";
+import { Button, Spinner } from "@heroui/react";
 
-const SEVERITY = {
-  CRITICAL: { label: "CRITICAL", color: "#ef4444", bg: "#2a0808" },
-  HIGH: { label: "HIGH", color: "#f97316", bg: "#1f1008" },
-  MEDIUM: { label: "MEDIUM", color: "#eab308", bg: "#1a1500" },
-  LOW: { label: "LOW", color: "#22d3ee", bg: "#001a1f" },
-  INFO: { label: "INFO", color: "#6b7280", bg: "#111113" },
-  PASS: { label: "PASS", color: "#22c55e", bg: "#0a1a0f" },
-} as const;
+const SUMMARY_SEVERITIES = [
+  "CRITICAL",
+  "HIGH",
+  "MEDIUM",
+  "LOW",
+  "PASS",
+] as const;
+
+/** Valid border tint (avoid `var(--x)33` — invalid in CSS). */
+function severityBorder(fgVar: string, opacityPercent: string): string {
+  return `color-mix(in oklab, ${fgVar} ${opacityPercent}, transparent)`;
+}
+
+function severityVars(sev: string): { fg: string; bg: string } {
+  switch (sev) {
+    case "CRITICAL":
+      return { fg: "var(--severity-critical)", bg: "var(--severity-bg-critical)" };
+    case "HIGH":
+      return { fg: "var(--severity-high)", bg: "var(--severity-bg-high)" };
+    case "MEDIUM":
+      return { fg: "var(--severity-medium)", bg: "var(--severity-bg-medium)" };
+    case "LOW":
+      return { fg: "var(--severity-low)", bg: "var(--severity-bg-low)" };
+    case "PASS":
+      return { fg: "var(--severity-pass)", bg: "var(--severity-bg-pass)" };
+    default:
+      return { fg: "var(--severity-info)", bg: "var(--severity-bg-info)" };
+  }
+}
+
+function scoreAppearance(score: number | null): { color: string; border: string } {
+  if (score === null)
+    return { color: "var(--muted)", border: "var(--border)" };
+  if (score >= 80)
+    return { color: "var(--success)", border: "color-mix(in oklch, var(--success) 35%, transparent)" };
+  if (score >= 50)
+    return { color: "var(--warning)", border: "color-mix(in oklch, var(--warning) 35%, transparent)" };
+  if (score >= 25)
+    return { color: "var(--tool-orange)", border: "color-mix(in oklch, var(--tool-orange) 35%, transparent)" };
+  return { color: "var(--danger)", border: "color-mix(in oklch, var(--danger) 35%, transparent)" };
+}
+
+function scoreLabelText(score: number | null): string {
+  if (score === null) return "—";
+  if (score >= 80) return "SAFE";
+  if (score >= 50) return "CAUTION";
+  if (score >= 25) return "RISKY";
+  return "DANGEROUS";
+}
 
 export default function MCPSecurityScanner({
   serverUrl = "",
@@ -58,352 +101,220 @@ export default function MCPSecurityScanner({
 
   const clampedScore =
     score !== null ? Math.max(0, Math.min(100, score)) : null;
+  const scoreVis = scoreAppearance(clampedScore);
 
-  const scoreColor =
-    clampedScore === null
-      ? "#6b7280"
-      : clampedScore >= 80
-        ? "#22c55e"
-        : clampedScore >= 50
-          ? "#eab308"
-          : clampedScore >= 25
-            ? "#f97316"
-            : "#ef4444";
-
-  const scoreLabel =
-    clampedScore === null
-      ? "—"
-      : clampedScore >= 80
-        ? "SAFE"
-        : clampedScore >= 50
-          ? "CAUTION"
-          : clampedScore >= 25
-            ? "RISKY"
-            : "DANGEROUS";
+  const inputCls = clsx(
+    "min-w-0 flex-1 rounded-lg border bg-[var(--field-background)] px-3 py-2",
+    "font-mono text-xs text-[var(--field-foreground)] placeholder:text-[var(--field-placeholder)]",
+    "outline-none transition-colors focus:border-[var(--focus)] focus:ring-2 focus:ring-[var(--focus)]/25",
+    "border-[var(--field-border)]",
+  );
 
   return (
-    <div style={S.root}>
-      <div style={S.header}>
-        <div style={S.headerLeft}>
-          <span style={S.shieldIcon}>🛡</span>
-          <div>
-            <div style={S.title}>Security Scanner</div>
-            <div style={S.subtitle}>
-              Checks for tool poisoning, prompt injection & misconfigurations
-            </div>
+    <div
+      className={clsx(
+        "overflow-hidden rounded-2xl border border-divider bg-surface",
+        "font-mono text-[13px] text-foreground shadow-[var(--surface-shadow)]",
+      )}
+    >
+      <div className="flex items-center justify-between gap-4 border-b border-divider bg-[var(--surface-secondary)] px-5 py-4">
+        <div className="flex min-w-0 items-center gap-3">
+          <span className="text-2xl leading-none" aria-hidden>
+            🛡
+          </span>
+          <div className="min-w-0">
+            <div className="text-sm font-bold text-foreground">Security Scanner</div>
+            <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground">
+              Checks for tool poisoning, prompt injection &amp; misconfigurations
+            </p>
           </div>
         </div>
         {clampedScore !== null && (
-          <div style={S.scoreBox}>
-            <div
-              style={{
-                ...S.scoreBadge,
-                color: scoreColor,
-                borderColor: scoreColor + "44",
-              }}
+          <div
+            className="flex shrink-0 flex-col items-center rounded-lg border px-4 py-2"
+            style={{
+              color: scoreVis.color,
+              borderColor: scoreVis.border,
+            }}
+          >
+            <span className="text-[28px] font-extrabold leading-none">
+              {clampedScore}
+            </span>
+            <span
+              className="mt-0.5 text-[10px] font-bold tracking-widest"
+              style={{ color: scoreVis.color }}
             >
-              <span style={S.scoreNum}>{clampedScore}</span>
-              <span style={{ ...S.scoreLabel, color: scoreColor }}>
-                {scoreLabel}
-              </span>
-            </div>
+              {scoreLabelText(clampedScore)}
+            </span>
           </div>
         )}
       </div>
 
-      <div style={S.inputRow}>
+      <form
+        className="mcp-scanner-controls flex flex-wrap items-center gap-2 border-b border-divider bg-[var(--surface-secondary)] px-5 py-3"
+        autoComplete="off"
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (!scanning && url.trim()) void scan();
+        }}
+      >
         <input
-          style={S.input}
+          className={clsx(inputCls, "min-w-[12rem] flex-1")}
           type="text"
+          inputMode="url"
+          name="mcp-scan-endpoint"
+          id="mcp-scan-endpoint"
+          autoComplete="url"
+          autoCorrect="off"
+          spellCheck={false}
           placeholder="https://your-mcp-server.com/mcp"
           value={url}
           onChange={(e) => setUrl(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && scan()}
         />
         <input
-          style={{ ...S.input, width: 180 }}
+          className={clsx(inputCls, "w-full sm:w-44")}
           type="password"
+          name="mcp-scan-authorization"
+          id="mcp-scan-authorization"
+          autoComplete="new-password"
           placeholder="Token (optional)"
           value={authToken}
           onChange={(e) => setAuthToken(e.target.value)}
         />
-        <button
-          style={S.scanBtn(scanning || !url.trim())}
-          onClick={scan}
-          disabled={scanning || !url.trim()}
+        <Button
+          type="submit"
+          variant="danger"
+          size="sm"
+          className="shrink-0 font-bold"
+          isDisabled={scanning || !url.trim()}
         >
           {scanning ? (
-            <span style={S.scanningText}>Scanning…</span>
+            <span className="inline-flex items-center gap-2">
+              <Spinner size="sm" />
+              Scanning…
+            </span>
           ) : (
             "Run Scan"
           )}
-        </button>
-      </div>
+        </Button>
+      </form>
 
-      {error && <div style={S.errorBanner}>{error}</div>}
-
-      {scanning && (
-        <div style={S.progressWrap}>
-          <div style={S.progressBar}>
-            <div style={S.progressFill} />
-          </div>
-          <div style={S.progressLabel}>
-            Connecting and analysing server metadata…
-          </div>
+      {error ? (
+        <div
+          className={clsx(
+            "border-t border-danger/25 bg-[var(--tool-error-bg)] px-5 py-2",
+            "text-xs font-medium text-danger",
+          )}
+        >
+          {error}
         </div>
-      )}
+      ) : null}
 
-      {results && (
-        <div style={S.results}>
-          <div style={S.summary}>
-            {["CRITICAL", "HIGH", "MEDIUM", "LOW", "PASS"].map((sev) => {
+      {scanning ? (
+        <div className="px-5 py-4">
+          <div className="h-1 overflow-hidden rounded-full bg-[var(--surface-tertiary)]">
+            <div className="h-full w-2/5 animate-pulse rounded-full bg-[var(--focus)]" />
+          </div>
+          <p className="mt-2 text-[11px] text-muted-foreground">
+            Connecting and analysing server metadata…
+          </p>
+        </div>
+      ) : null}
+
+      {results ? (
+        <div className="flex flex-col gap-4 p-5">
+          <div className="flex flex-wrap items-center gap-2">
+            {SUMMARY_SEVERITIES.map((sev) => {
               const count = results.findings.filter(
                 (f: any) => f.severity === sev,
               ).length;
               if (count === 0) return null;
-              const s = SEVERITY[sev as keyof typeof SEVERITY];
+              const { fg, bg } = severityVars(sev);
               return (
                 <div
                   key={sev}
+                  className="flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-[11px] font-semibold"
                   style={{
-                    ...S.summaryChip,
-                    background: s.bg,
-                    borderColor: s.color + "44",
+                    backgroundColor: bg,
+                    borderColor: severityBorder(fg, "22%"),
+                    color: fg,
                   }}
                 >
-                  <span style={{ color: s.color, fontWeight: 700 }}>
-                    {count}
-                  </span>
-                  <span style={{ color: s.color, fontSize: 10 }}>{sev}</span>
+                  <span className="font-extrabold">{count}</span>
+                  <span>{sev}</span>
                 </div>
               );
             })}
-            <div style={S.summaryMeta}>
+            <div className="ml-auto text-[11px] text-muted-foreground">
               {results.toolCount} tools · {results.resourceCount} resources ·{" "}
               {results.promptCount} prompts scanned
             </div>
           </div>
 
-          <div style={S.findings}>
+          <div className="flex flex-col gap-2.5">
             {results.findings.map((f: any, i: number) => {
-              const s =
-                SEVERITY[f.severity as keyof typeof SEVERITY] || SEVERITY.INFO;
+              const { fg, bg } = severityVars(f.severity);
               return (
                 <div
                   key={i}
+                  className="flex flex-col gap-2 rounded-lg border p-3.5"
                   style={{
-                    ...S.finding,
-                    background: s.bg,
-                    borderColor: s.color + "33",
+                    backgroundColor: bg,
+                    borderColor: severityBorder(fg, "28%"),
                   }}
                 >
-                  <div style={S.findingHeader}>
+                  <div className="flex flex-wrap items-center gap-2">
                     <span
+                      className="shrink-0 rounded border px-1.5 py-0.5 text-[10px] font-bold tracking-wide"
                       style={{
-                        ...S.sevBadge,
-                        color: s.color,
-                        borderColor: s.color + "55",
+                        color: fg,
+                        borderColor: severityBorder(fg, "38%"),
                       }}
                     >
                       {f.severity}
                     </span>
-                    <span style={S.findingTitle}>{f.title}</span>
-                    <span style={S.findingCheck}>{f.check}</span>
+                    <span className="min-w-0 flex-1 text-[13px] font-semibold text-foreground">
+                      {f.title}
+                    </span>
+                    <span className="text-[10px] italic text-muted-foreground">
+                      {f.check}
+                    </span>
                   </div>
-                  <div style={S.findingDesc}>{f.description}</div>
-                  {f.evidence && (
-                    <pre style={{ ...S.evidence, borderColor: s.color + "22" }}>
+                  <p className="text-xs leading-relaxed text-muted-foreground">
+                    {f.description}
+                  </p>
+                  {f.evidence ? (
+                    <pre
+                      className={clsx(
+                        "max-h-[120px] overflow-x-auto whitespace-pre-wrap break-all rounded-md border p-3",
+                        "font-mono text-[11px]",
+                      )}
+                      style={{
+                        background: "var(--tool-code-bg)",
+                        borderColor: severityBorder(fg, "22%"),
+                        color: "var(--tool-orange)",
+                      }}
+                    >
                       {f.evidence}
                     </pre>
-                  )}
-                  {f.recommendation && (
-                    <div style={S.recommendation}>
-                      <span style={S.recIcon}>💡</span>
-                      {f.recommendation}
+                  ) : null}
+                  {f.recommendation ? (
+                    <div className="flex gap-2 text-start text-[11px] leading-snug text-[var(--tool-green)]">
+                      <span aria-hidden>💡</span>
+                      <span>{f.recommendation}</span>
                     </div>
-                  )}
+                  ) : null}
                 </div>
               );
             })}
           </div>
 
-          <div style={S.footer}>
-            Scanned at {new Date(results.scannedAt).toLocaleString()} · This
-            scan analyses static metadata only. Runtime behaviour may differ.
-          </div>
+          <p className="border-t border-divider pt-3 text-center text-[10px] text-muted-foreground">
+            Scanned at {new Date(results.scannedAt).toLocaleString()} · This scan
+            analyses static metadata only. Runtime behaviour may differ.
+          </p>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }
-
-const C = {
-  bg: "#0d0d0f",
-  surface: "#141416",
-  border: "#1e1e22",
-  text: "#e8e8f0",
-  muted: "#5a5a6e",
-  accent: "#7c6af7",
-  red: "#ef4444",
-  green: "#22c55e",
-};
-
-const S: any = {
-  root: {
-    fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
-    background: C.bg,
-    color: C.text,
-    borderRadius: 10,
-    border: `1px solid ${C.border}`,
-    overflow: "hidden",
-    fontSize: 13,
-  },
-  header: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: "16px 20px",
-    borderBottom: `1px solid ${C.border}`,
-    background: C.surface,
-  },
-  headerLeft: { display: "flex", alignItems: "center", gap: 12 },
-  shieldIcon: { fontSize: 24 },
-  title: { fontWeight: 700, fontSize: 14, color: C.text },
-  subtitle: { fontSize: 11, color: C.muted, marginTop: 2 },
-  scoreBox: {},
-  scoreBadge: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    border: "1px solid",
-    borderRadius: 8,
-    padding: "8px 16px",
-    minWidth: 80,
-  },
-  scoreNum: { fontSize: 28, fontWeight: 800, lineHeight: 1 },
-  scoreLabel: {
-    fontSize: 10,
-    fontWeight: 700,
-    letterSpacing: "0.1em",
-    marginTop: 2,
-  },
-  inputRow: {
-    display: "flex",
-    gap: 8,
-    padding: "12px 20px",
-    borderBottom: `1px solid ${C.border}`,
-    background: C.surface,
-  },
-  input: {
-    flex: 1,
-    background: C.bg,
-    border: `1px solid ${C.border}`,
-    borderRadius: 6,
-    padding: "8px 12px",
-    color: C.text,
-    fontFamily: "inherit",
-    fontSize: 12,
-    outline: "none",
-  },
-  scanBtn: (disabled: boolean) => ({
-    background: disabled ? "#1e1e28" : "#ef4444",
-    color: disabled ? C.muted : "#fff",
-    border: "none",
-    borderRadius: 6,
-    padding: "8px 20px",
-    cursor: disabled ? "not-allowed" : "pointer",
-    fontFamily: "inherit",
-    fontSize: 12,
-    fontWeight: 700,
-    whiteSpace: "nowrap",
-    transition: "all 0.2s",
-  }),
-  scanningText: { animation: "pulse 1s infinite" },
-  errorBanner: {
-    background: "#2a0f0f",
-    borderTop: `1px solid ${C.red}44`,
-    color: C.red,
-    padding: "8px 20px",
-    fontSize: 12,
-  },
-  progressWrap: { padding: "16px 20px" },
-  progressBar: {
-    height: 3,
-    background: "#1e1e22",
-    borderRadius: 2,
-    overflow: "hidden",
-  },
-  progressFill: {
-    height: "100%",
-    width: "60%",
-    background: "#7c6af7",
-    borderRadius: 2,
-    animation: "progress 1.5s ease-in-out infinite",
-  },
-  progressLabel: { fontSize: 11, color: C.muted, marginTop: 8 },
-  results: { padding: 20, display: "flex", flexDirection: "column", gap: 16 },
-  summary: { display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" },
-  summaryChip: {
-    display: "flex",
-    alignItems: "center",
-    gap: 6,
-    border: "1px solid",
-    borderRadius: 6,
-    padding: "4px 10px",
-    fontSize: 11,
-    fontWeight: 600,
-  },
-  summaryMeta: { fontSize: 11, color: C.muted, marginLeft: "auto" },
-  findings: { display: "flex", flexDirection: "column", gap: 10 },
-  finding: {
-    border: "1px solid",
-    borderRadius: 8,
-    padding: 14,
-    display: "flex",
-    flexDirection: "column",
-    gap: 8,
-  },
-  findingHeader: { display: "flex", alignItems: "center", gap: 8 },
-  sevBadge: {
-    border: "1px solid",
-    borderRadius: 4,
-    padding: "1px 7px",
-    fontSize: 10,
-    fontWeight: 700,
-    letterSpacing: "0.08em",
-    flexShrink: 0,
-  },
-  findingTitle: { fontWeight: 600, fontSize: 13, flex: 1 },
-  findingCheck: { fontSize: 10, color: C.muted, fontStyle: "italic" },
-  findingDesc: { fontSize: 12, color: "#aaa", lineHeight: 1.6 },
-  evidence: {
-    background: "#08080c",
-    border: "1px solid",
-    borderRadius: 5,
-    padding: "8px 12px",
-    fontSize: 11,
-    color: "#f97316",
-    margin: 0,
-    fontFamily: "inherit",
-    overflowX: "auto",
-    maxHeight: 120,
-    whiteSpace: "pre-wrap",
-    wordBreak: "break-all",
-  },
-  recommendation: {
-    display: "flex",
-    gap: 8,
-    alignItems: "flex-start",
-    fontSize: 11,
-    color: "#22c55e",
-    lineHeight: 1.5,
-  },
-  recIcon: { flexShrink: 0 },
-  footer: {
-    fontSize: 10,
-    color: C.muted,
-    textAlign: "center",
-    borderTop: `1px solid ${C.border}`,
-    paddingTop: 12,
-  },
-};

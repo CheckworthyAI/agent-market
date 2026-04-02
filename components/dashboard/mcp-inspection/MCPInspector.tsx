@@ -458,31 +458,54 @@ export default function MCPInspector() {
 
       <div style={styles.connectBar}>
         {!connected ? (
-          <>
+          <form
+            className="mcp-inspector-controls"
+            style={{
+              display: "flex",
+              flex: 1,
+              flexWrap: "wrap",
+              alignItems: "center",
+              gap: 8,
+              minWidth: 0,
+            }}
+            autoComplete="off"
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (!connecting && serverUrl.trim()) void connect();
+            }}
+          >
             <input
               style={styles.urlInput}
               type="text"
+              inputMode="url"
+              name="mcp-inspector-endpoint"
+              id="mcp-inspector-endpoint"
+              autoComplete="url"
+              autoCorrect="off"
+              spellCheck={false}
               placeholder="https://your-mcp-server.com/mcp"
               value={serverUrl}
               onChange={(e) => setServerUrl(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && !connected && connect()}
             />
             <input
-              style={{ ...styles.urlInput, width: 180 }}
+              style={{ ...styles.urlInput, width: 180, flex: "0 0 auto" }}
               type="password"
+              name="mcp-inspector-authorization"
+              id="mcp-inspector-authorization"
+              autoComplete="new-password"
               placeholder="Bearer token (optional)"
               value={authToken}
               onChange={(e) => setAuthToken(e.target.value)}
             />
             <Button
+              type="submit"
               className=""
-              onPress={() => connect()}
               isDisabled={connecting || !serverUrl.trim()}
               style={styles.connectBtn(connecting || !serverUrl.trim())}
             >
               {connecting ? "Connecting…" : "Connect"}
             </Button>
-          </>
+          </form>
         ) : (
           <>
             <div

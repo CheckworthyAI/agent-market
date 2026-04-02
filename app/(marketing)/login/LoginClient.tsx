@@ -43,7 +43,7 @@ export default function LoginClient() {
         setError(signInError.message);
         setLoading(false);
       } else {
-        router.push('/dashboard');
+        router.push("/dashboard/agent-aim?aimFresh=1");
         router.refresh();
       }
     } else {
@@ -73,7 +73,9 @@ export default function LoginClient() {
         provider: 'google',
         options: {
           scopes: 'profile email',
-          redirectTo: `${typeof window !== 'undefined' ? window.location.origin : ''}/dashboard`,
+          redirectTo: `${
+            typeof window !== 'undefined' ? window.location.origin : ''
+          }/auth/callback?next=${encodeURIComponent("/dashboard/agent-aim?aimFresh=1")}`,
         },
       });
 

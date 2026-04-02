@@ -30,7 +30,7 @@ function VerifyContent() {
       setError(verifyError.message);
       setLoading(false);
     } else {
-      router.push('/dashboard/agent-aim');
+      router.push("/dashboard/agent-aim?aimFresh=1");
       router.refresh();
     }
   };

@@ -139,13 +139,14 @@
     --text-muted: oklch(0.62 0.022 265);
     --text-subtle: oklch(0.55 0.02 265);
 
-    --background: oklch(0.24 0.012 265);
+    --background: oklch(0.22 0.012 265);
     --foreground: var(--text-primary);
-    --surface: oklch(0.30 0.012 265);
+    /* Elevated card surface: clearly lighter than canvas for dashboards / tool panels */
+    --surface: oklch(0.325 0.014 265);
     --surface-foreground: var(--text-primary);
-    --surface-secondary: oklch(0.34 0.012 265);
+    --surface-secondary: oklch(0.375 0.014 265);
     --surface-secondary-foreground: var(--text-primary);
-    --surface-tertiary: oklch(0.38 0.012 265);
+    --surface-tertiary: oklch(0.415 0.014 265);
     --surface-tertiary-foreground: var(--text-primary);
 
     --overlay: oklch(0.30 0.012 265);
@@ -196,12 +197,20 @@
     --focus: oklch(0.72 0.08 250);
     --link: oklch(0.75 0.08 250);
 
-    --surface-shadow: 0 0 0 1px oklch(100% 0 0 / 0.06);
+    --surface-shadow:
+      0 1px 2px oklch(0% 0 0 / 0.24),
+      0 0 0 1px oklch(100% 0 0 / 0.1);
     --overlay-shadow:
       0 8px 32px oklch(0% 0 0 / 0.4),
       0 0 0 1px oklch(100% 0 0 / 0.08);
     --field-shadow: 0 0 0 0 transparent;
 
+    --severity-critical: oklch(0.68 0.16 25);
+    --severity-high: oklch(0.72 0.14 55);
+    --severity-medium: oklch(0.76 0.12 85);
+    --severity-low: oklch(0.68 0.1 230);
+    --severity-info: oklch(0.68 0.02 265);
+    --severity-pass: oklch(0.68 0.12 150);
     --severity-bg-critical: oklch(0.22 0.04 25);
     --severity-bg-high: oklch(0.24 0.04 55);
     --severity-bg-medium: oklch(0.26 0.04 85);
@@ -252,6 +261,24 @@
     background: var(--scrollbar-thumb-hover);
     border: 2px solid transparent;
     background-clip: padding-box;
+  }
+
+  /* MCP scanner: themed autofill (inputs use --field-*) */
+  .mcp-scanner-controls input:-webkit-autofill,
+  .mcp-scanner-controls input:-webkit-autofill:hover,
+  .mcp-scanner-controls input:-webkit-autofill:focus {
+    -webkit-text-fill-color: var(--field-foreground);
+    -webkit-box-shadow: 0 0 0 1000px var(--field-background) inset;
+    transition: background-color 99999s ease-out;
+  }
+
+  /* MCP inspector: themed autofill (inputs use --tool-bg) */
+  .mcp-inspector-controls input:-webkit-autofill,
+  .mcp-inspector-controls input:-webkit-autofill:hover,
+  .mcp-inspector-controls input:-webkit-autofill:focus {
+    -webkit-text-fill-color: var(--foreground);
+    -webkit-box-shadow: 0 0 0 1000px var(--tool-bg) inset;
+    transition: background-color 99999s ease-out;
   }
 }
 

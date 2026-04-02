@@ -16,7 +16,9 @@ export default function AgentsPage() {
   const onClose = () => setIsOpen(false);
   const [activeAgent, setActiveAgent] = useState<UserAgent | null>(null);
   const [currentSessionId, setCurrentSessionId] = useState("");
-  const [chatHistory, setChatHistory] = useState<{ role: "user" | "agent"; text: string }[]>([]);
+  const [chatHistory, setChatHistory] = useState<
+    { role: "user" | "agent"; text: string }[]
+  >([]);
   const [userInput, setUserInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -32,7 +34,9 @@ export default function AgentsPage() {
 
   const fetchAgents = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) {
         setLoading(false);
         return;
@@ -42,7 +46,7 @@ export default function AgentsPage() {
         .from("adk_agents")
         .select("*")
         .eq("user_id", user.id);
-      
+
       if (error) throw error;
       setAgents(data || []);
     } catch (error) {
@@ -66,13 +70,16 @@ export default function AgentsPage() {
 
     const messageText = userInput;
     setUserInput("");
-    setChatHistory(prev => [...prev, { role: "user", text: messageText }]);
+    setChatHistory((prev) => [...prev, { role: "user", text: messageText }]);
     setIsStreaming(true);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      const backendUrl = process.env.NEXT_PUBLIC_ADK_BACKEND_URL || "http://localhost:8000";
-      
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      const backendUrl =
+        process.env.NEXT_PUBLIC_ADK_BACKEND_URL || "http://localhost:8000";
+
       const response = await fetch(`${backendUrl}/api/run-agent/stream`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -80,7 +87,7 @@ export default function AgentsPage() {
           agent_name: activeAgent.name,
           user_message: messageText,
           session_id: currentSessionId,
-          user_id: user?.id || "anonymous-user"
+          user_id: user?.id || "anonymous-user",
         }),
       });
 
@@ -91,7 +98,7 @@ export default function AgentsPage() {
       let currentAgentMessage = "";
 
       if (reader) {
-        setChatHistory(prev => [...prev, { role: "agent", text: "" }]);
+        setChatHistory((prev) => [...prev, { role: "agent", text: "" }]);
 
         while (true) {
           const { done, value } = await reader.read();
@@ -104,13 +111,14 @@ export default function AgentsPage() {
             if (line.startsWith("data: ")) {
               try {
                 const data = JSON.parse(line.slice(6));
-                
+
                 if (data.type === "partial" || data.type === "final") {
                   currentAgentMessage += data.text;
-                  setChatHistory(prev => {
+                  setChatHistory((prev) => {
                     const newHistory = [...prev];
                     if (newHistory.length > 0) {
-                      newHistory[newHistory.length - 1].text = currentAgentMessage;
+                      newHistory[newHistory.length - 1].text =
+                        currentAgentMessage;
                     }
                     return newHistory;
                   });
@@ -124,7 +132,13 @@ export default function AgentsPage() {
       }
     } catch (error) {
       console.error("Chat error:", error);
-      setChatHistory(prev => [...prev, { role: "agent", text: "Sorry, I encountered an error connecting to the backend." }]);
+      setChatHistory((prev) => [
+        ...prev,
+        {
+          role: "agent",
+          text: "Sorry, I encountered an error connecting to the backend.",
+        },
+      ]);
     } finally {
       setIsStreaming(false);
     }
@@ -143,7 +157,9 @@ export default function AgentsPage() {
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-1">
         <h1 className="text-3xl font-bold text-default-900">My Agents</h1>
-        <p className="text-default-500">View and manage your deployed AI agents.</p>
+        <p className="text-default-500">
+          View and manage your deployed AI agents.
+        </p>
       </div>
 
       {agents.length === 0 ? (
@@ -163,16 +179,28 @@ export default function AgentsPage() {
                     {agent.name.charAt(0)}
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-default-900">{agent.name}</h3>
-                    <p className="text-xs text-default-500 font-mono">{agent.id}</p>
+                    <h3 className="text-lg font-bold text-default-900">
+                      {agent.name}
+                    </h3>
+                    <p className="text-xs text-default-500 font-mono">
+                      {agent.id}
+                    </p>
                   </div>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-6">
                   <div className="flex flex-col">
-                    <span className="text-[10px] uppercase tracking-wider text-default-400 font-bold">Status</span>
+                    <span className="text-[10px] uppercase tracking-wider text-default-400 font-bold">
+                      Status
+                    </span>
                     <Chip
-                      color={agent.status === "active" ? "success" : agent.status === "paused" ? "warning" : "default"}
+                      color={
+                        agent.status === "active"
+                          ? "success"
+                          : agent.status === "paused"
+                            ? "warning"
+                            : "default"
+                      }
                       size="sm"
                       variant="soft"
                       className="mt-1"
@@ -182,19 +210,38 @@ export default function AgentsPage() {
                   </div>
 
                   <div className="flex flex-col">
-                    <span className="text-[10px] uppercase tracking-wider text-default-400 font-bold">Accuracy</span>
-                    <span className="text-sm font-bold text-default-900">N/A</span>
+                    <span className="text-[10px] uppercase tracking-wider text-default-400 font-bold">
+                      Accuracy
+                    </span>
+                    <span className="text-sm font-bold text-default-900">
+                      N/A
+                    </span>
                   </div>
 
                   <div className="flex flex-col">
-                    <span className="text-[10px] uppercase tracking-wider text-default-400 font-bold">Tasks Run</span>
-                    <span className="text-sm font-bold text-default-900">0</span>
+                    <span className="text-[10px] uppercase tracking-wider text-default-400 font-bold">
+                      Tasks Run
+                    </span>
+                    <span className="text-sm font-bold text-default-900">
+                      0
+                    </span>
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <Button size="sm" variant="ghost" className="border-divider" onClick={() => handleRun(agent)}>Run</Button>
-                    <Button size="sm" variant="secondary">View Logs</Button>
-                    <Button size="sm" variant="primary">Configure</Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="border-divider"
+                      onClick={() => handleRun(agent)}
+                    >
+                      Run
+                    </Button>
+                    <Button size="sm" variant="secondary">
+                      View Logs
+                    </Button>
+                    <Button size="sm" variant="primary">
+                      Configure
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -214,25 +261,45 @@ export default function AgentsPage() {
                   {activeAgent?.name.charAt(0)}
                 </div>
                 <div className="flex flex-col">
-                  <span className="font-bold text-default-900">Run Agent: {activeAgent?.name}</span>
-                  <span className="text-[10px] text-default-400 font-mono">SID: {currentSessionId}</span>
+                  <span className="font-bold text-default-900">
+                    Run Agent: {activeAgent?.name}
+                  </span>
+                  <span className="text-[10px] text-default-400 font-mono">
+                    SID: {currentSessionId}
+                  </span>
                 </div>
               </div>
-              <Button variant="ghost" size="sm" onClick={onClose} className="min-w-0 p-2">✕</Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onClose}
+                className="min-w-0 p-2"
+              >
+                ✕
+              </Button>
             </div>
 
             {/* Modal Body */}
             <div className="flex-grow overflow-y-auto p-6 space-y-4 min-h-[300px]">
               {chatHistory.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-default-400 gap-3 py-12">
-                  <div className="w-12 h-12 bg-divider/30 rounded-full flex items-center justify-center text-2xl">💬</div>
+                  <div className="w-12 h-12 bg-divider/30 rounded-full flex items-center justify-center text-2xl">
+                    💬
+                  </div>
                   <p>Start a conversation with your agent.</p>
                 </div>
               ) : (
                 chatHistory.map((chat, i) => (
-                  <div key={i} className={`flex ${chat.role === "user" ? "justify-end" : "justify-start"}`}>
-                    <div className={`max-w-[85%] p-4 rounded-2xl ${chat.role === "user" ? "bg-primary text-white rounded-tr-none shadow-md" : "bg-divider/30 text-default-900 rounded-tl-none border border-divider/50"}`}>
-                      <p className="text-sm leading-relaxed whitespace-pre-wrap">{chat.text}</p>
+                  <div
+                    key={i}
+                    className={`flex ${chat.role === "user" ? "justify-end" : "justify-start"}`}
+                  >
+                    <div
+                      className={`max-w-[85%] p-4 rounded-2xl ${chat.role === "user" ? "bg-primary text-white rounded-tr-none shadow-md" : "bg-divider/30 text-default-900 rounded-tl-none border border-divider/50"}`}
+                    >
+                      <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                        {chat.text}
+                      </p>
                     </div>
                   </div>
                 ))
@@ -257,10 +324,12 @@ export default function AgentsPage() {
                   placeholder="Type your message..."
                   value={userInput}
                   onChange={(e) => setUserInput(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && !isStreaming && sendMessage()}
+                  onKeyDown={(e) =>
+                    e.key === "Enter" && !isStreaming && sendMessage()
+                  }
                   disabled={isStreaming}
                 />
-                <Button 
+                <Button
                   variant="primary"
                   className="h-11 px-6 shadow-lg shadow-primary/20"
                   isDisabled={isStreaming || !userInput.trim()}
@@ -276,4 +345,3 @@ export default function AgentsPage() {
     </div>
   );
 }
-

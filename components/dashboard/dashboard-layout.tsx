@@ -77,12 +77,14 @@ export const DashboardLayout = ({ children }: Props) => {
         closeSidebar,
       }}
     >
-      <section className="flex min-h-screen w-full flex-col">
+      <section className="flex h-dvh max-h-dvh min-h-0 w-full flex-col overflow-hidden">
         <TopNavBar />
-        <div className="flex min-h-0 w-full min-w-0 flex-1">
+        <div className="flex min-h-0 w-full min-w-0 flex-1 overflow-hidden">
           <SidebarWrapper />
-          <div className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain">
-            <div className="p-6">{children}</div>
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden overscroll-contain bg-background">
+            <div className="flex min-h-0 flex-1 flex-col overflow-y-auto bg-background p-6">
+              {children}
+            </div>
           </div>
         </div>
       </section>
