@@ -5,7 +5,6 @@ import clsx from "clsx";
 import { Sidebar } from "./sidebar.styles";
 import { Dropdown, Separator } from "@heroui/react";
 import { BurguerButton } from "../navbar/burguer-button";
-import { BrandMark } from "../brand-mark";
 import {
   AgentsIcon,
   MarketplaceIcon,
@@ -21,6 +20,7 @@ import { SidebarMenu } from "./sidebar-menu";
 import { useSidebarContext } from "../layout-context";
 import { usePathname, useRouter } from "next/navigation";
 import NextLink from "next/link";
+import { BrandMark } from "../brand-mark";
 import { createClient } from "@/utils/supabase/client";
 import type { User } from "@supabase/supabase-js";
 import { SidebarCollapse } from "./sidebar-collapse";
@@ -161,38 +161,35 @@ export const SidebarWrapper = () => {
       <div className={Sidebar({ expanded: sidebarOpen })}>
         <div
           className={clsx(
-            "grid min-h-0 shrink-0 grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden rounded-r-[2rem] border-r border-[var(--sidebar-border)] bg-[var(--sidebar-bg)]",
+            "grid min-h-0 shrink-0 grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden bg-[var(--sidebar-bg)]",
+            isMdUp && "border-r border-divider",
             !isMdUp &&
-              "fixed left-0 top-16 z-[203] h-[calc(100vh-4rem)] w-64 transition-transform duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]",
+            "fixed left-0 top-16 z-[203] h-[calc(100vh-4rem)] w-64 rounded-r-[2rem] border-r border-[var(--sidebar-border)] transition-transform duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]",
             !isMdUp &&
-              (sidebarOpen
-                ? "translate-x-0 px-2 pb-2 pt-3"
-                : "pointer-events-none -translate-x-full px-2 pb-2 pt-3"),
+            (sidebarOpen
+              ? "translate-x-0 px-2 pb-2 pt-3"
+              : "pointer-events-none -translate-x-full px-2 pb-2 pt-3"),
             isMdUp &&
-              "relative z-auto h-full min-h-0 w-full max-w-full translate-x-0 px-2 pb-2 pt-3",
+            "relative z-auto h-full min-h-0 w-full max-w-full translate-x-0 px-2 pb-2 pt-3",
             isMdUp && isRail && "justify-items-stretch",
             isMdUp && !isRail && "w-64",
           )}
         >
           <div className={Sidebar.Header({ rail: isRail })}>
-            {!isRail ? (
-              <>
-                <NextLink
-                  href="/"
-                  className="flex min-w-0 flex-1 items-center gap-2 rounded-xl py-1 pr-1 no-underline transition-colors hover:bg-[var(--sidebar-item-hover)]"
-                >
-                  <div className="shrink-0 rounded-md bg-[var(--logo-mark-bg)] p-1.5">
-                    <BrandMark size={22} />
-                  </div>
-                  <span className="truncate text-[15px] font-semibold tracking-tight text-default-900">
-                    Agent Market
-                  </span>
-                </NextLink>
-                <BurguerButton variant="rail" />
-              </>
-            ) : (
-              <BurguerButton variant="rail" />
+            {!isRail && (
+              <NextLink
+                href="/"
+                className="flex items-center gap-2.5 px-2 py-2 transition-opacity hover:opacity-80"
+              >
+                <div className="shrink-0 rounded-md bg-[var(--logo-mark-bg)] p-1.5 shadow-sm">
+                  <BrandMark size={22} />
+                </div>
+                <span className="truncate text-[17.5px] font-bold tracking-tight text-foreground">
+                  Agent Market
+                </span>
+              </NextLink>
             )}
+            <BurguerButton variant="rail" />
           </div>
 
           <div className={Sidebar.Body({ rail: isRail })}>
@@ -202,12 +199,6 @@ export const SidebarWrapper = () => {
               isActive={pathname === "/dashboard/agent-aim"}
               href="/dashboard/agent-aim"
             />
-            {/* <SidebarItem
-              title="Workspace"
-              icon={<HomeIcon />}
-              isActive={pathname === "/dashboard/overview"}
-              href="/dashboard/overview"
-            /> */}
             <SidebarMenu title="Explore" hideLabel={isRail}>
               <SidebarItem
                 isActive={pathname === "/dashboard/agents"}
@@ -221,9 +212,9 @@ export const SidebarWrapper = () => {
                 icon={<MarketplaceIcon />}
                 href="/dashboard/marketplace"
               />
-              
-              <SidebarCollapse 
-                title="MCP" 
+
+              <SidebarCollapse
+                title="MCP"
                 icon={<MCPIcon />}
               >
                 <SidebarItem
@@ -249,132 +240,132 @@ export const SidebarWrapper = () => {
           </div>
 
           <div className={Sidebar.Footer({ rail: isRail })}>
-              <Dropdown>
-                <Dropdown.Trigger
-                  aria-label="Account menu"
-                  className={clsx(
-                    "flex outline-none transition-[background-color,box-shadow] duration-150 focus-visible:ring-2 focus-visible:ring-focus",
-                    isRail
-                      ? "size-10 shrink-0 items-center justify-center rounded-full border-0 bg-transparent p-0 hover:bg-[var(--sidebar-item-hover)]"
-                      : "w-full min-w-0 cursor-pointer items-center gap-3 rounded-xl border border-[var(--border)]/60 bg-[var(--sidebar-profile-chip)] px-2.5 py-2.5 text-left shadow-[0_1px_2px_oklch(0%_0_0_/0.04)] hover:bg-[var(--sidebar-profile-chip-hover)] dark:border-white/[0.08]",
-                  )}
-                >
-                  {avatarUrl ? (
-                    <img
-                      src={avatarUrl}
-                      alt=""
-                      className="size-9 shrink-0 rounded-full object-cover"
-                    />
-                  ) : (
-                    <div
-                      className={clsx(
-                        "flex shrink-0 items-center justify-center rounded-full bg-[var(--sidebar-user-avatar-bg)] font-semibold text-[var(--sidebar-user-avatar-fg)]",
-                        isRail ? "size-9 text-xs" : "size-9 text-[12px]",
-                      )}
-                    >
-                      {initials}
-                    </div>
-                  )}
-                  {!isRail && (
-                    <div className="min-w-0 flex-1 text-left">
-                      <p className="truncate text-sm font-semibold leading-tight text-default-900">
-                        {displayName}
-                      </p>
-                      <p className="mt-0.5 truncate text-xs leading-tight text-default-500">
-                        {planLabel}
-                      </p>
-                    </div>
-                  )}
-                </Dropdown.Trigger>
-                <Dropdown.Popover
-                  placement="top start"
-                  offset={8}
-                  className="rounded-2xl border border-divider bg-overlay p-0 shadow-[var(--overlay-shadow)]"
-                >
-                  <Dropdown.Menu
-                    aria-label="Account"
-                    className="min-w-[220px] gap-0 rounded-2xl p-1.5"
+            <Dropdown>
+              <Dropdown.Trigger
+                aria-label="Account menu"
+                className={clsx(
+                  "flex outline-none transition-[background-color,box-shadow] duration-150 focus-visible:ring-2 focus-visible:ring-focus",
+                  isRail
+                    ? "size-10 shrink-0 items-center justify-center rounded-full border-0 bg-transparent p-0 hover:bg-[var(--sidebar-item-hover)]"
+                    : "w-full min-w-0 cursor-pointer items-center gap-3 rounded-xl border border-[var(--border)]/60 bg-[var(--sidebar-profile-chip)] px-2.5 py-2.5 text-left shadow-[0_1px_2px_oklch(0%_0_0_/0.04)] hover:bg-[var(--sidebar-profile-chip-hover)] dark:border-white/[0.08]",
+                )}
+              >
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt=""
+                    className="size-9 shrink-0 rounded-full object-cover"
+                  />
+                ) : (
+                  <div
+                    className={clsx(
+                      "flex shrink-0 items-center justify-center rounded-full bg-[var(--sidebar-user-avatar-bg)] font-semibold text-[var(--sidebar-user-avatar-fg)]",
+                      isRail ? "size-9 text-xs" : "size-9 text-[12px]",
+                    )}
                   >
-                    <Dropdown.Item
-                      key="view-profile"
-                      className="cursor-pointer rounded-xl py-2.5 pl-2 pr-3 data-[hovered=true]:bg-default"
-                      onPress={() => {
-                        router.push("/dashboard/settings");
-                        closeMobileSidebar();
-                      }}
-                    >
-                      <span className="flex items-center gap-3">
-                        <UserCircleIcon className="shrink-0 text-default-600" />
-                        <span className="text-sm font-medium text-default-900">
-                          View Profile
-                        </span>
+                    {initials}
+                  </div>
+                )}
+                {!isRail && (
+                  <div className="min-w-0 flex-1 text-left">
+                    <p className="truncate text-sm font-semibold leading-tight text-default-900">
+                      {displayName}
+                    </p>
+                    <p className="mt-0.5 truncate text-xs leading-tight text-default-500">
+                      {planLabel}
+                    </p>
+                  </div>
+                )}
+              </Dropdown.Trigger>
+              <Dropdown.Popover
+                placement="top start"
+                offset={8}
+                className="rounded-2xl border border-divider bg-overlay p-0 shadow-[var(--overlay-shadow)]"
+              >
+                <Dropdown.Menu
+                  aria-label="Account"
+                  className="min-w-[220px] gap-0 rounded-2xl p-1.5"
+                >
+                  <Dropdown.Item
+                    key="view-profile"
+                    className="cursor-pointer rounded-xl py-2.5 pl-2 pr-3 data-[hovered=true]:bg-default"
+                    onPress={() => {
+                      router.push("/dashboard/settings");
+                      closeMobileSidebar();
+                    }}
+                  >
+                    <span className="flex items-center gap-3">
+                      <UserCircleIcon className="shrink-0 text-default-600" />
+                      <span className="text-sm font-medium text-default-900">
+                        View Profile
                       </span>
-                    </Dropdown.Item>
-                    <Dropdown.Item
-                      key="settings"
-                      className="cursor-pointer rounded-xl py-2.5 pl-2 pr-3 data-[hovered=true]:bg-default"
-                      onPress={() => {
-                        router.push("/dashboard/settings");
-                        closeMobileSidebar();
-                      }}
-                    >
-                      <span className="flex items-center gap-3">
-                        <SettingsIcon
-                          size={18}
-                          className="shrink-0 text-default-600"
-                        />
-                        <span className="text-sm font-medium text-default-900">
-                          My Settings
-                        </span>
+                    </span>
+                  </Dropdown.Item>
+                  <Dropdown.Item
+                    key="settings"
+                    className="cursor-pointer rounded-xl py-2.5 pl-2 pr-3 data-[hovered=true]:bg-default"
+                    onPress={() => {
+                      router.push("/dashboard/settings");
+                      closeMobileSidebar();
+                    }}
+                  >
+                    <span className="flex items-center gap-3">
+                      <SettingsIcon
+                        size={18}
+                        className="shrink-0 text-default-600"
+                      />
+                      <span className="text-sm font-medium text-default-900">
+                        My Settings
                       </span>
-                    </Dropdown.Item>
-                    <Dropdown.Item
-                      key="billing"
-                      className="cursor-pointer rounded-xl py-2.5 pl-2 pr-3 data-[hovered=true]:bg-default"
-                      onPress={() => {
-                        router.push("/dashboard/billing");
-                        closeMobileSidebar();
-                      }}
-                    >
-                      <span className="flex items-center gap-3">
-                        <BillingIcon
-                          size={18}
-                          className="shrink-0 text-default-600"
-                        />
-                        <span className="text-sm font-medium text-default-900">
-                          Billing Info
-                        </span>
+                    </span>
+                  </Dropdown.Item>
+                  <Dropdown.Item
+                    key="billing"
+                    className="cursor-pointer rounded-xl py-2.5 pl-2 pr-3 data-[hovered=true]:bg-default"
+                    onPress={() => {
+                      router.push("/dashboard/billing");
+                      closeMobileSidebar();
+                    }}
+                  >
+                    <span className="flex items-center gap-3">
+                      <BillingIcon
+                        size={18}
+                        className="shrink-0 text-default-600"
+                      />
+                      <span className="text-sm font-medium text-default-900">
+                        Billing Info
                       </span>
-                    </Dropdown.Item>
-                    <Dropdown.Item
-                      key="help"
-                      className="cursor-pointer rounded-xl py-2.5 pl-2 pr-3 data-[hovered=true]:bg-default"
-                      onPress={() => {
-                        router.push("/help-feedback");
-                        closeMobileSidebar();
-                      }}
-                    >
-                      <span className="flex items-center gap-3">
-                        <HelpCircleIcon className="shrink-0 text-default-600" />
-                        <span className="text-sm font-medium text-default-900">
-                          Help &amp; Feedback
-                        </span>
+                    </span>
+                  </Dropdown.Item>
+                  <Dropdown.Item
+                    key="help"
+                    className="cursor-pointer rounded-xl py-2.5 pl-2 pr-3 data-[hovered=true]:bg-default"
+                    onPress={() => {
+                      router.push("/help-feedback");
+                      closeMobileSidebar();
+                    }}
+                  >
+                    <span className="flex items-center gap-3">
+                      <HelpCircleIcon className="shrink-0 text-default-600" />
+                      <span className="text-sm font-medium text-default-900">
+                        Help &amp; Feedback
                       </span>
-                    </Dropdown.Item>
-                    <Separator className="my-1 h-px bg-divider" />
-                    <Dropdown.Item
-                      key="logout"
-                      className="cursor-pointer rounded-xl py-2.5 pl-2 pr-3 text-danger data-[hovered=true]:bg-danger/10"
-                      onPress={handleLogout}
-                    >
-                      <span className="flex items-center gap-3">
-                        <LogOutIcon className="shrink-0 text-danger" />
-                        <span className="text-sm font-medium">Sign out</span>
-                      </span>
-                    </Dropdown.Item>
-                  </Dropdown.Menu>
-                </Dropdown.Popover>
-              </Dropdown>
+                    </span>
+                  </Dropdown.Item>
+                  <Separator className="my-1 h-px bg-divider" />
+                  <Dropdown.Item
+                    key="logout"
+                    className="cursor-pointer rounded-xl py-2.5 pl-2 pr-3 text-danger data-[hovered=true]:bg-danger/10"
+                    onPress={handleLogout}
+                  >
+                    <span className="flex items-center gap-3">
+                      <LogOutIcon className="shrink-0 text-danger" />
+                      <span className="text-sm font-medium">Sign out</span>
+                    </span>
+                  </Dropdown.Item>
+                </Dropdown.Menu>
+              </Dropdown.Popover>
+            </Dropdown>
           </div>
         </div>
       </div>

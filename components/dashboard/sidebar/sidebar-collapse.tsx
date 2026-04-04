@@ -60,8 +60,8 @@ export const SidebarCollapse = ({
     // For now, let's just show the icon.
     return (
       <div className="flex w-full justify-center px-0.5 py-1">
-        <div className="flex h-11 w-11 items-center justify-center rounded-xl text-default-600 hover:bg-[var(--sidebar-item-hover)] transition-colors">
-          <span className="flex items-center justify-center [&_svg]:size-6">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl text-default-600 hover:bg-[var(--sidebar-item-hover)] transition-colors">
+          <span className="flex items-center justify-center [&_svg]:size-5">
             {icon}
           </span>
         </div>
@@ -74,11 +74,11 @@ export const SidebarCollapse = ({
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={clsx(
-          "flex w-full cursor-pointer items-center gap-3.5 rounded-xl px-2.5 py-2.5 transition-all duration-150 outline-none select-none",
+          "flex w-full cursor-pointer items-center gap-3.5 rounded-xl px-2.5 py-1.5 transition-all duration-150 outline-none select-none",
           isOpen ? "text-default-900" : "text-default-600 hover:bg-[var(--sidebar-item-hover)]"
         )}
       >
-        <span className="flex shrink-0 items-center justify-center [&_svg]:size-6 text-default-500">
+        <span className="flex shrink-0 items-center justify-center [&_svg]:size-5 text-default-500">
           {icon}
         </span>
         <span className="flex-1 text-left font-medium text-sm">
@@ -99,7 +99,7 @@ export const SidebarCollapse = ({
         )}
       >
         <div className="overflow-hidden">
-          <div className="flex flex-col gap-0.5 pl-6 mt-0.5 relative ml-6">
+          <div className="flex flex-col gap-0.5 pl-3 mt-0.5 relative ml-4">
             <div className="absolute left-0 top-0 bottom-3 w-px bg-default-100" />
             {children}
           </div>

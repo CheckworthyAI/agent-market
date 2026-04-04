@@ -35,14 +35,14 @@ export const SidebarItem = ({ icon, title, isActive, href = "" }: Props) => {
             ? "bg-[var(--sidebar-item-active)] text-[var(--sidebar-fg-active)]"
             : "text-default-600 hover:bg-[var(--sidebar-item-hover)]",
           compact
-            ? "flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-xl transition-colors duration-150"
-            : "flex min-h-11 w-full cursor-pointer items-center gap-3.5 rounded-xl px-2.5 py-2.5 transition-colors duration-150",
+            ? "flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-xl transition-colors duration-150"
+            : "flex min-h-10 w-full cursor-pointer items-center gap-3.5 rounded-xl px-2.5 py-1.5 transition-colors duration-150",
         )}
         onClick={handleClick}
       >
         <span
           className={clsx(
-            "flex shrink-0 items-center justify-center [&_svg]:size-6",
+            "flex shrink-0 items-center justify-center [&_svg]:size-5",
             isActive
               ? "text-[var(--sidebar-fg-active)]"
               : "text-default-500 [&_path]:opacity-95",

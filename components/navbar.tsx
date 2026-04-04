@@ -98,7 +98,7 @@ export const Navbar = () => {
               </li>
             )}
             {siteConfig.navItems
-              .filter((item) => !(pathname?.startsWith("/login") && item.href === "/"))
+              .filter((item) => !(pathname?.startsWith("/login") && item.href === "/" || pathname?.startsWith("/signup") && item.href === "/"))
               .map((item) => (
               <li key={item.href}>
                 <NextLink

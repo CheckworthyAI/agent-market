@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useState } from "react";
+import clsx from "clsx";
 import { SidebarWrapper } from "./sidebar/sidebar";
 import { TopNavBar } from "./navbar/navbar";
 import { SidebarContext } from "./layout-context";
@@ -77,15 +78,13 @@ export const DashboardLayout = ({ children }: Props) => {
         closeSidebar,
       }}
     >
-      <section className="flex h-dvh max-h-dvh min-h-0 w-full flex-col overflow-hidden">
-        <TopNavBar />
-        <div className="flex min-h-0 w-full min-w-0 flex-1 overflow-hidden">
-          <SidebarWrapper />
-          <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden overscroll-contain bg-background">
-            <div className="flex min-h-0 flex-1 flex-col overflow-y-auto bg-background p-6">
-              {children}
-            </div>
-          </div>
+      <section className="flex h-screen w-full flex-row overflow-hidden bg-[var(--sidebar-bg)]">
+        <SidebarWrapper />
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden border-l border-divider bg-background shadow-[-4px_0_15px_-3px_oklch(0%_0_0_/0.02)]">
+          <TopNavBar />
+          <main className="flex min-h-0 flex-1 flex-col overflow-y-auto p-4 md:p-8">
+            {children}
+          </main>
         </div>
       </section>
     </SidebarContext.Provider>

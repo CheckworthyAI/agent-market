@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { useSearchParams } from "next/navigation";
 import { Button, TextField, InputGroup } from "@heroui/react";
 import { ThemeSwitch } from "@/components/theme-switch";
 
@@ -16,6 +17,9 @@ export default function MCPInspector() {
   // Multi-server state: each server has id, url, token, info, tools, resources, prompts
   const [servers, setServers] = useState<any[]>([]);
   const [activeServerId, setActiveServerId] = useState<number | null>(null);
+
+  const searchParams = useSearchParams();
+  const hasAutoConnected = useRef(false);
 
   const [activeTab, setActiveTab] = useState("Tools");
   const [selectedTool, setSelectedTool] = useState<any>(null);
@@ -135,7 +139,7 @@ export default function MCPInspector() {
     }
   };
 
-  const connect = async (urlParam?: string, tokenParam?: string) => {
+  const connect = useCallback(async (urlParam?: string, tokenParam?: string) => {
     const urlToUse = urlParam ?? serverUrl;
     const tokenToUse = tokenParam ?? authToken;
     if (!urlToUse?.trim()) return;
@@ -183,7 +187,16 @@ export default function MCPInspector() {
     } finally {
       setConnecting(false);
     }
-  };
+  }, [serverUrl, authToken, activeServerId, servers]);
+
+  useEffect(() => {
+    const url = searchParams.get("url");
+    const token = searchParams.get("token");
+    if (url && !hasAutoConnected.current) {
+      hasAutoConnected.current = true;
+      connect(url, token || "");
+    }
+  }, [searchParams, connect]);
 
   const disconnect = () => {
     if (!activeServer) return;
@@ -798,20 +811,23 @@ function getStyles(): any {
   return {
     root: {
       fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace",
-      background: C.bg,
       color: C.text,
-      minHeight: "100vh",
       display: "flex",
       flexDirection: "column",
       fontSize: 13,
+      background: "var(--surface)",
+      borderRadius: 16,
+      border: "1px solid var(--divider)",
+      overflow: "hidden",
+      boxShadow: "var(--surface-shadow)",
     },
     header: {
       display: "flex",
       alignItems: "center",
       justifyContent: "space-between",
       padding: "12px 20px",
-      borderBottom: `1px solid ${C.border}`,
-      background: C.surface,
+      borderBottom: `1px solid var(--divider)`,
+      background: "var(--surface-secondary)",
     },
     headerLeft: { display: "flex", alignItems: "center", gap: 10 },
     logo: { fontSize: 18, color: C.accent },
@@ -843,8 +859,8 @@ function getStyles(): any {
       display: "flex",
       gap: 8,
       padding: "12px 20px",
-      borderBottom: `1px solid ${C.border}`,
-      background: C.surface,
+      borderBottom: `1px solid var(--divider)`,
+      background: "var(--surface)",
     },
     urlInput: {
       flex: 1,

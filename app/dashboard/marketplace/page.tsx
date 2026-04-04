@@ -41,7 +41,7 @@ export default function MarketplacePage() {
       const { data, error } = await supabase
         .from("adk_agent_templates")
         .select("*");
-      
+
       if (error) throw error;
       setTemplates(data || []);
     } catch (error) {
@@ -55,47 +55,12 @@ export default function MarketplacePage() {
     setDeploying(template.id);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      
+
       if (!user) {
         alert("Please log in to deploy agents.");
         return;
       }
 
-      const backendUrl = process.env.NEXT_PUBLIC_ADK_BACKEND_URL || "http://localhost:8000";
-      let response = await fetch(`${backendUrl}/api/build-agent`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          agent_name: template.name,
-          instructions: template.instructions,
-          mcp_sse_endpoints: template.mcp_sse_endpoints,
-        }),
-      });
-
-      if (response.status === 409) {
-        await fetch(`${backendUrl}/api/agents/${encodeURIComponent(template.name)}`, {
-          method: "DELETE",
-        });
-        
-        response = await fetch(`${backendUrl}/api/build-agent`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            agent_name: template.name,
-            instructions: template.instructions,
-            mcp_sse_endpoints: template.mcp_sse_endpoints,
-          }),
-        });
-      }
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.detail?.message || errorData.detail || "Failed to initialize agent on backend.");
-      }
 
       const { error: upsertError } = await supabase
         .from("adk_agents")
@@ -106,7 +71,7 @@ export default function MarketplacePage() {
           mcp_sse_endpoints: template.mcp_sse_endpoints,
           status: "inactive"
         }, { onConflict: 'name' });
-      
+
       if (upsertError) throw upsertError;
       alert(`Successfully deployed ${template.name}!`);
     } catch (error: any) {
@@ -131,38 +96,6 @@ export default function MarketplacePage() {
         return;
       }
 
-      const backendUrl = process.env.NEXT_PUBLIC_ADK_BACKEND_URL || "http://localhost:8000";
-      let response = await fetch(`${backendUrl}/api/build-agent`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          agent_name: customName,
-          instructions: customInstructions,
-          mcp_sse_endpoints: selectedEndpoints,
-        }),
-      });
-
-      if (response.status === 409) {
-        await fetch(`${backendUrl}/api/agents/${encodeURIComponent(customName)}`, {
-          method: "DELETE",
-        });
-        
-        response = await fetch(`${backendUrl}/api/build-agent`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            agent_name: customName,
-            instructions: customInstructions,
-            mcp_sse_endpoints: selectedEndpoints,
-          }),
-        });
-      }
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.detail?.message || errorData.detail || "Failed to build agent.");
-      }
-
       const { error: upsertError } = await supabase
         .from("adk_agents")
         .upsert({
@@ -172,7 +105,7 @@ export default function MarketplacePage() {
           mcp_sse_endpoints: selectedEndpoints,
           status: "inactive"
         }, { onConflict: 'name' });
-      
+
       if (upsertError) throw upsertError;
 
       alert(`Successfully created custom agent: ${customName}!`);
@@ -180,7 +113,7 @@ export default function MarketplacePage() {
       setCustomName("");
       setCustomInstructions("");
       setSelectedEndpoints([]);
-      
+
     } catch (error: any) {
       console.error("Creation error:", error);
       alert(error.message || "An unexpected error occurred.");
@@ -205,11 +138,10 @@ export default function MarketplacePage() {
           <h1 className="text-3xl font-bold text-default-900">Agent MarketPlace</h1>
           <p className="text-default-500">Discover or create your own custom AI agents.</p>
         </div>
-        
+
         <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto items-center">
-          <Button 
-            variant="primary" 
-            className="font-bold flex gap-2 h-11"
+          <Button
+            className="font-bold flex gap-2 h-10 px-6 bg-primary text-primary-foreground shadow-sm hover:shadow-lg hover:shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
             onClick={() => setIsModalOpen(true)}
           >
             <PlusIcon size={20} />
@@ -249,21 +181,21 @@ export default function MarketplacePage() {
                     <span>⭐ {template.stars}</span>
                   </div>
                 </div>
-                
+
                 <h3 className="text-xl font-bold text-default-900 mb-2">{template.name}</h3>
                 <p className="text-default-500 text-sm mb-6 pb-4 border-b border-divider">
                   {template.description}
                 </p>
               </div>
-              
+
               <div className="flex justify-between items-center">
                 <span className="text-lg font-bold text-default-900">
                   {template.price === 0 ? "Free" : `$${template.price}/mo`}
                 </span>
-                <Button 
-                  size="sm" 
-                  variant="primary" 
-                  className="font-bold min-w-[120px]"
+                <Button
+                  size="sm"
+                  variant="primary"
+                  className="font-bold min-w-[120px] h-10 shadow-sm hover:shadow-md hover:shadow-primary/10 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
                   isDisabled={deploying !== null}
                   onClick={() => handleDeploy(template)}
                 >
@@ -288,7 +220,7 @@ export default function MarketplacePage() {
                 variant="ghost"
                 size="sm"
                 onClick={() => setIsModalOpen(false)}
-                className="min-w-0 p-2"
+                className="min-w-0 p-2 rounded-full hover:bg-default-100 transition-colors"
               >
                 ✕
               </Button>
@@ -299,8 +231,8 @@ export default function MarketplacePage() {
                 <label className="text-sm font-bold text-default-700">Agent Name</label>
                 <TextField aria-label="Agent Name">
                   <InputGroup>
-                    <InputGroup.Input 
-                      placeholder="e.g. Research Assistant" 
+                    <InputGroup.Input
+                      placeholder="e.g. Research Assistant"
                       value={customName}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCustomName(e.target.value)}
                     />
@@ -310,7 +242,7 @@ export default function MarketplacePage() {
 
               <div className="flex flex-col gap-2">
                 <label className="text-sm font-bold text-default-700">Instructions</label>
-                <textarea 
+                <textarea
                   placeholder="How should this agent behave? What are its goals?"
                   className="w-full min-h-[120px] bg-divider/10 border border-divider rounded-xl px-4 py-3 text-sm outline-none focus:border-default-400 transition-colors"
                   value={customInstructions}
@@ -323,24 +255,22 @@ export default function MarketplacePage() {
                 <p className="text-xs text-default-400 mb-2">Select the background services this agent can use.</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {presets.map((preset) => (
-                    <div 
+                    <div
                       key={preset.url}
-                      className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
-                        selectedEndpoints.includes(preset.url) 
-                          ? "bg-primary/5 border-primary shadow-sm" 
+                      className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${selectedEndpoints.includes(preset.url)
+                          ? "bg-primary/5 border-primary shadow-sm"
                           : "bg-surface border-divider hover:border-default-400"
-                      }`}
+                        }`}
                       onClick={() => {
-                        setSelectedEndpoints(prev => 
-                          prev.includes(preset.url) 
-                            ? prev.filter(u => u !== preset.url) 
+                        setSelectedEndpoints(prev =>
+                          prev.includes(preset.url)
+                            ? prev.filter(u => u !== preset.url)
                             : [...prev, preset.url]
                         );
                       }}
                     >
-                      <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${
-                        selectedEndpoints.includes(preset.url) ? "bg-primary border-primary" : "border-default-400"
-                      }`}>
+                      <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${selectedEndpoints.includes(preset.url) ? "bg-primary border-primary" : "border-default-400"
+                        }`}>
                         {selectedEndpoints.includes(preset.url) && <span className="text-[10px] text-white font-bold">✓</span>}
                       </div>
                       <div className="flex flex-col min-w-0">
@@ -354,12 +284,15 @@ export default function MarketplacePage() {
             </div>
 
             <div className="p-6 border-t border-divider bg-background/50 flex justify-end gap-3">
-              <Button variant="ghost" onClick={() => setIsModalOpen(false)}>
+              <Button 
+                variant="ghost" 
+                onClick={() => setIsModalOpen(false)}
+                className="font-medium hover:bg-default-100 transition-colors"
+              >
                 Cancel
               </Button>
-              <Button 
-                variant="primary" 
-                className="font-bold min-w-[120px]"
+              <Button
+                className="font-bold min-w-[120px] h-10 bg-primary text-primary-foreground shadow-sm hover:shadow-lg hover:shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
                 isDisabled={creating}
                 onClick={handleCreateCustomAgent}
               >

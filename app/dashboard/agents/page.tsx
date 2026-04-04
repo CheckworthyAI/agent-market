@@ -77,59 +77,16 @@ export default function AgentsPage() {
       const {
         data: { user },
       } = await supabase.auth.getUser();
-      const backendUrl =
-        process.env.NEXT_PUBLIC_ADK_BACKEND_URL || "http://localhost:8000";
 
-      const response = await fetch(`${backendUrl}/api/run-agent/stream`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          agent_name: activeAgent.name,
-          user_message: messageText,
-          session_id: currentSessionId,
-          user_id: user?.id || "anonymous-user",
-        }),
-      });
+      // TODO: Implement Supabase Edge Function call here
+      setChatHistory((prev) => [
+        ...prev,
+        {
+          role: "agent",
+          text: "Agent chat functionality is currently being migrated to Supabase Edge Functions.",
+        },
+      ]);
 
-      if (!response.ok) throw new Error("Failed to reach backend");
-
-      const reader = response.body?.getReader();
-      const decoder = new TextDecoder();
-      let currentAgentMessage = "";
-
-      if (reader) {
-        setChatHistory((prev) => [...prev, { role: "agent", text: "" }]);
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          const chunk = decoder.decode(value);
-          const lines = chunk.split("\n");
-
-          for (const line of lines) {
-            if (line.startsWith("data: ")) {
-              try {
-                const data = JSON.parse(line.slice(6));
-
-                if (data.type === "partial" || data.type === "final") {
-                  currentAgentMessage += data.text;
-                  setChatHistory((prev) => {
-                    const newHistory = [...prev];
-                    if (newHistory.length > 0) {
-                      newHistory[newHistory.length - 1].text =
-                        currentAgentMessage;
-                    }
-                    return newHistory;
-                  });
-                }
-              } catch (e) {
-                // Ignore incomplete JSON chunks from split lines
-              }
-            }
-          }
-        }
-      }
     } catch (error) {
       console.error("Chat error:", error);
       setChatHistory((prev) => [
