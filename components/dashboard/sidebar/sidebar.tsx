@@ -231,6 +231,12 @@ export const SidebarWrapper = () => {
                 icon={<MarketplaceIcon />}
                 href="/dashboard/marketplace"
               />
+              <SidebarItem
+                isActive={pathname === "/dashboard/remote-agent"}
+                title="Remote Agent"
+                icon={<AgentsIcon />}
+                href="/dashboard/remote-agent"
+              />
 
               <SidebarCollapse
                 title="MCP"
@@ -360,7 +366,7 @@ export const SidebarWrapper = () => {
                     key="help"
                     className="cursor-pointer rounded-xl py-2.5 pl-2 pr-3 data-[hovered=true]:bg-default"
                     onPress={() => {
-                      router.push("/help-feedback");
+                      router.push("/dashboard/help-feedback");
                       closeMobileSidebar();
                     }}
                   >

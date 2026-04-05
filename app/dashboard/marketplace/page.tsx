@@ -20,10 +20,10 @@ function StepBar({ current }: { current: number }) {
             <div className="flex flex-col items-center gap-1">
               <div
                 className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 ${done
-                    ? "bg-primary text-white"
-                    : active
-                      ? "bg-primary/20 border-2 border-primary text-primary"
-                      : "bg-default-100 text-default-400"
+                  ? "bg-primary text-white"
+                  : active
+                    ? "bg-primary/20 border-2 border-primary text-primary"
+                    : "bg-default-100 text-default-400"
                   }`}
               >
                 {done ? "✓" : i + 1}
@@ -424,16 +424,6 @@ export default function MarketplacePage() {
               {/* ─── Step 0: Configure ─────────────────────────────────────── */}
               {step === 0 && (
                 <>
-                  {/* Template badge */}
-                  <div className="flex items-center gap-2 p-3 bg-primary/5 border border-primary/20 rounded-xl text-sm">
-                    <span className="text-lg">📦</span>
-                    <span className="text-default-700 font-medium">
-                      Template:{" "}
-                      <span className="text-primary font-bold">
-                        Sreedharreddymukkamalla/myagent_adk
-                      </span>
-                    </span>
-                  </div>
 
                   <div className="flex flex-col gap-2">
                     <label
@@ -502,32 +492,6 @@ export default function MarketplacePage() {
                       onChange={(e) => setCustomInstructions(e.target.value)}
                     />
                   </div>
-
-                  <div className="flex flex-col gap-2">
-                    <label
-                      className="text-sm font-bold text-default-700"
-                      htmlFor="build-agent-github-pat"
-                    >
-                      GitHub Personal Access Token
-                    </label>
-                    <p className="text-xs text-default-400">
-                      Needs <code className="bg-default-100 px-1 rounded">repo</code> scope to fork &amp; push. Leave blank to use the server token.
-                    </p>
-                    <input
-                      id="build-agent-github-pat"
-                      name="build-agent-github-pat"
-                      type="password"
-                      autoComplete="new-password"
-                      autoCorrect="off"
-                      spellCheck={false}
-                      data-lpignore="true"
-                      data-1p-ignore
-                      placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
-                      className="w-full bg-divider/10 border border-divider rounded-xl px-4 py-3 text-sm font-mono outline-none focus:border-primary/60 transition-colors"
-                      value={githubPat}
-                      onChange={(e) => setGithubPat(e.target.value)}
-                    />
-                  </div>
                 </>
               )}
 
@@ -559,8 +523,8 @@ export default function MarketplacePage() {
                           <div
                             key={preset.url}
                             className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-all duration-200 ${selected
-                                ? "bg-primary/5 border-primary shadow-sm"
-                                : "bg-surface border-divider hover:border-default-400"
+                              ? "bg-primary/5 border-primary shadow-sm"
+                              : "bg-surface border-divider hover:border-default-400"
                               }`}
                             onClick={() => {
                               setSelectedEndpoints((prev) =>
@@ -625,23 +589,6 @@ root_agent = Agent(
                         </pre>
                       </div>
 
-                      {/* Summary */}
-                      <div className="flex flex-col gap-2 p-4 bg-default-50 rounded-xl border border-divider text-sm">
-                        <div className="flex justify-between">
-                          <span className="text-default-500">GitHub repo will be:</span>
-                          <span className="font-mono text-primary text-xs">
-                            {(process.env.NEXT_PUBLIC_GITHUB_USERNAME || "your-username")}/{customName.toLowerCase().replace(/[^a-z0-9-]/g, "-")}-agent
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-default-500">MCPs attached:</span>
-                          <span className="font-bold">{selectedEndpoints.length}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-default-500">Deploy via:</span>
-                          <span className="font-bold text-default-700">GitHub Actions → Cloud Run</span>
-                        </div>
-                      </div>
 
                       {/* Log */}
                       {buildLog.length > 0 && <StatusLog items={buildLog} />}
@@ -663,30 +610,13 @@ root_agent = Agent(
                       </div>
 
                       <div className="flex flex-col gap-2">
-                        <a
-                          href={buildResult.github_repo}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-3 p-3 bg-default-50 border border-divider hover:border-default-300 rounded-xl transition-colors group"
-                        >
-                          <span className="text-2xl">📂</span>
-                          <div className="flex flex-col min-w-0">
-                            <span className="text-sm font-bold group-hover:text-primary transition-colors">
-                              GitHub Repository
-                            </span>
-                            <span className="text-xs text-default-400 truncate">
-                              {buildResult.github_repo}
-                            </span>
-                          </div>
-                          <span className="ml-auto text-default-400 text-xs">↗</span>
-                        </a>
 
                         <div className="flex items-center gap-3 p-3 bg-default-50 border border-divider rounded-xl">
                           <span className="text-2xl">☁️</span>
                           <div className="flex flex-col min-w-0">
                             <span className="text-sm font-bold">Cloud Run deploying...</span>
                             <span className="text-xs text-default-400">
-                              Check the Actions tab in your GitHub repo for deploy status.
+                              The Agent is getting deployed to cloud run wait for few minutes.
                             </span>
                           </div>
                         </div>
