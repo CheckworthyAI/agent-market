@@ -6,7 +6,7 @@ import { createClient } from "@/utils/supabase/server";
 export const maxDuration = 60;
 
 const ADK_BASE_URL =
-  "https://capital-agent-service-git-475756125529.us-central1.run.app";
+  "https://master-agent-475756125529.us-central1.run.app";
 const APP_NAME = "my_agent_new";
 
 export async function POST(request: Request) {
@@ -98,6 +98,8 @@ export async function POST(request: Request) {
       let buffer = "";
 
       try {
+        let lastSentText = "";
+
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
@@ -108,53 +110,59 @@ export async function POST(request: Request) {
           buffer = lines.pop() ?? "";
 
           for (const line of lines) {
-            if (!line.startsWith("data: ")) continue;
-            const raw = line.slice(6).trim();
-            if (!raw || raw === "[DONE]") continue;
+            if (line.startsWith("data: ")) {
+              try {
+                const payload = line.slice(6);
+                if (payload === "[DONE]") continue;
 
-            try {
-              const event = JSON.parse(raw) as {
-                content?: {
-                  role?: string;
-                  parts?: { text?: string }[];
-                };
-              };
+                const event = JSON.parse(payload);
+                if (event.content?.role !== "model") continue;
 
-              // Only emit model/assistant turns
-              if (event.content?.role !== "model") continue;
-
-              const text = (event.content.parts ?? [])
-                .map((p) => p.text ?? "")
-                .join("");
-
-              if (text) {
-                controller.enqueue(encoder.encode(text));
-              }
-            } catch {
-              // skip malformed events
-            }
-          }
-        }
-
-        // Flush remaining buffer
-        if (buffer.startsWith("data: ")) {
-          const raw = buffer.slice(6).trim();
-          if (raw && raw !== "[DONE]") {
-            try {
-              const event = JSON.parse(raw) as {
-                content?: { role?: string; parts?: { text?: string }[] };
-              };
-              if (event.content?.role === "model") {
-                const text = (event.content.parts ?? [])
-                  .map((p) => p.text ?? "")
+                const fullText = (event.content.parts ?? [])
+                  .map((p: any) => p.text ?? "")
                   .join("");
-                if (text) controller.enqueue(encoder.encode(text));
+
+                if (fullText.length > lastSentText.length) {
+                  const deltaContent = fullText.slice(lastSentText.length);
+                  lastSentText = fullText;
+
+                  const sseData = JSON.stringify({
+                    choices: [{ delta: { content: deltaContent } }],
+                  });
+                  controller.enqueue(encoder.encode(`data: ${sseData}\n\n`));
+                }
+              } catch (e) {
+                console.error("Error parsing upstream SSE line:", line, e);
               }
-            } catch {
-              // ignore
             }
           }
         }
+
+        // Final check for any remaining buffer
+        if (buffer.startsWith("data: ")) {
+          try {
+            const payload = buffer.slice(6);
+            if (payload !== "[DONE]") {
+              const event = JSON.parse(payload);
+              if (event.content?.role === "model") {
+                const fullText = (event.content.parts ?? [])
+                  .map((p: any) => p.text ?? "")
+                  .join("");
+
+                if (fullText.length > lastSentText.length) {
+                  const deltaContent = fullText.slice(lastSentText.length);
+                  const sseData = JSON.stringify({
+                    choices: [{ delta: { content: deltaContent } }],
+                  });
+                  controller.enqueue(encoder.encode(`data: ${sseData}\n\n`));
+                }
+              }
+            }
+          } catch (e) {
+            // Ignore parse errors on incomplete lines
+          }
+        }
+        controller.enqueue(encoder.encode("data: [DONE]\n\n"));
       } catch (e) {
         controller.error(e);
       } finally {
@@ -165,8 +173,9 @@ export async function POST(request: Request) {
 
   return new Response(readable, {
     headers: {
-      "Content-Type": "text/plain; charset=utf-8",
-      "Transfer-Encoding": "chunked",
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache, no-transform",
+      "Connection": "keep-alive",
       "X-Content-Type-Options": "nosniff",
     },
   });

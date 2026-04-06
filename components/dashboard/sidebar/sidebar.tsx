@@ -222,12 +222,7 @@ export const SidebarWrapper = () => {
                 icon={<MarketplaceIcon />}
                 href="/dashboard/marketplace"
               />
-              <SidebarItem
-                isActive={pathname === "/dashboard/remote-agent"}
-                title="Remote Agent"
-                icon={<AgentsIcon />}
-                href={(!user) ? "/login" : "/dashboard/remote-agent"}
-              />
+
 
               <SidebarCollapse
                 title="MCP"

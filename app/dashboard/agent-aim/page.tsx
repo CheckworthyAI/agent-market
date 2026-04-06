@@ -14,7 +14,7 @@ import clsx from "clsx";
 
 type Role = "user" | "assistant";
 
-type Msg = { id: string; role: Role; content: string };
+type Msg = { id: string; role: Role; content: string; images?: string[] };
 
 type ChatSession = {
   id: string;
@@ -72,6 +72,15 @@ function formatSessionTime(ts: number): string {
   } catch {
     return "";
   }
+}
+
+const IMAGE_REGEX = /(https?:\/\/[^\s\)]+\.(?:png|jpg|jpeg|gif|webp|svg|bmp)(?:\?[^\s\)]*)?)|(https:\/\/storage\.googleapis\.com\/[^\s\)]+)/gi;
+
+function getImagesFromText(text: string): string[] {
+  if (!text) return [];
+  // Heal fragmented URLs: remove newlines that break a path
+  const healed = text.replace(/([a-zA-Z0-9\-\._~%:\/\?#\[\]@!$&'\(\)\*\+,;=])\n\s*([a-zA-Z0-9\-\._~%:\/\?#\[\]@!$&'\(\)\*\+,;=])/g, '$1$2');
+  return healed.match(IMAGE_REGEX) || [];
 }
 
 function extractSseDelta(line: string): string | null {
@@ -1089,7 +1098,7 @@ export default function AgentAimPage() {
     "flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-zinc-900 transition-colors hover:bg-zinc-100 dark:text-zinc-100 dark:hover:bg-white/10";
 
   const composerSection = (
-    <div className="mx-auto w-full max-w-2xl">
+    <div className="mx-auto w-full max-w-3xl">
       {listening ? (
         <span id="agent-aim-voice-status" className="sr-only">
           Recording — speak, then press done or cancel.
@@ -1104,7 +1113,20 @@ export default function AgentAimPage() {
         type="file"
         className="hidden"
         multiple
-        accept="image/*,.pdf,.doc,.docx,.txt"
+        accept="image/*"
+        onChange={(e) => {
+          const files = Array.from(e.target.files || []);
+          const imageUrls = files
+            .filter((f) => f.type.startsWith("image/"))
+            .map((f) => URL.createObjectURL(f));
+          if (imageUrls.length > 0) {
+            // Append images to input for now? Or handle in send?
+            // For now let's just alert or log as a placeholder for full upload
+            console.log("Selected images:", imageUrls);
+            // In a real app, we'd upload these and then add URLs to the message
+            setInput((prev) => prev + (prev ? " " : "") + imageUrls.join(" "));
+          }
+        }}
         aria-hidden
         tabIndex={-1}
       />
@@ -1323,7 +1345,7 @@ export default function AgentAimPage() {
                     {isEditingUser ? (
                       <div
                         className={clsx(
-                          "w-full max-w-[min(100%,42rem)] rounded-3xl border border-divider px-4 pb-3 pt-3",
+                          "w-full max-w-full rounded-3xl border border-divider px-4 pb-3 pt-3",
                           "bg-default-100 shadow-sm dark:bg-white/[0.06]",
                         )}
                       >
@@ -1377,7 +1399,7 @@ export default function AgentAimPage() {
                       <>
                         <div
                           className={clsx(
-                            "max-w-[min(100%,42rem)] rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap",
+                            "max-w-full rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap",
                             m.role === "user"
                               ? "bg-[var(--accent)] text-[var(--accent-foreground)]"
                               : "border border-divider bg-[var(--surface)] text-default-900 shadow-sm",
@@ -1389,6 +1411,34 @@ export default function AgentAimPage() {
                                 <Spinner size="sm" /> Thinking…
                               </span>
                             ) : null)}
+
+                          {/* Render images from content or Msg.images */}
+                          {(() => {
+                            const detectedUrls = getImagesFromText(m.content);
+                            const combined = Array.from(new Set([...(m.images || []), ...detectedUrls]));
+                            if (combined.length === 0) return null;
+
+                            return (
+                              <div className="mt-3 flex flex-col gap-3">
+                                {combined.map((url, idx) => (
+                                  <div key={idx} className="overflow-hidden rounded-lg border border-divider/50 shadow-sm bg-black/5 min-h-[40px] flex items-center justify-center">
+                                    <img
+                                      src={url}
+                                      alt="Attachment"
+                                      className="max-w-full h-auto object-contain block hover:scale-[1.02] transition-transform duration-300"
+                                      loading="lazy"
+                                      onError={(e) => {
+                                        // If we're loading, the URL might still be incomplete
+                                        if (!loading) {
+                                          (e.target as HTMLImageElement).parentElement!.style.display = 'none';
+                                        }
+                                      }}
+                                    />
+                                  </div>
+                                ))}
+                              </div>
+                            );
+                          })()}
                         </div>
                         {copyable ? (
                           <div
