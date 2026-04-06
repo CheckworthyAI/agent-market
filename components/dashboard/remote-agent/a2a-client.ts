@@ -2,6 +2,7 @@ export interface ChatMessage {
   id: string;
   role: "user" | "agent";
   text: string;
+  images?: string[];
   timestamp: Date;
 }
 
@@ -52,7 +53,7 @@ function parseSSEChunk(buf: string): { dataLines: string[]; remainder: string } 
 export async function* streamMessage(
   text: string,
   contextId: string
-): AsyncGenerator<string> {
+): AsyncGenerator<{ text?: string; image?: string }> {
   const res = await fetch(BASE, {
     method: "POST",
     headers: {
@@ -123,7 +124,10 @@ export async function* streamMessage(
           for (const p of parts) {
             if (p?.text) {
               chunkCount++;
-              yield p.text;
+              yield { text: p.text };
+            } else if (p?.image?.url || p?.url) {
+              chunkCount++;
+              yield { image: p.image?.url || p.url };
             }
           }
         } catch (e) {

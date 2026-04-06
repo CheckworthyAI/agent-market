@@ -20,6 +20,15 @@ function extractReply(events: any[]): string {
     .trim();
 }
 
+const IMAGE_REGEX = /(https?:\/\/[^\s\)]+\.(?:png|jpg|jpeg|gif|webp|svg|bmp)(?:\?[^\s\)]*)?)|(https:\/\/storage\.googleapis\.com\/[^\s\)]+)/gi;
+
+function getImagesFromText(text: string): string[] {
+  if (!text) return [];
+  // Heal fragmented URLs: remove newlines that break a path
+  const healed = text.replace(/([a-zA-Z0-9\-\._~%:\/\?#\[\]@!$&'\(\)\*\+,;=])\n\s*([a-zA-Z0-9\-\._~%:\/\?#\[\]@!$&'\(\)\*\+,;=])/g, '$1$2');
+  return healed.match(IMAGE_REGEX) || [];
+}
+
 export default function AgentsPage() {
   const [agents, setAgents] = useState<(UserAgent & { checkingHealth?: boolean })[]>([]);
   const [loading, setLoading] = useState(true);
@@ -366,6 +375,24 @@ export default function AgentsPage() {
                       <p className="text-sm leading-relaxed whitespace-pre-wrap">
                         {chat.text}
                       </p>
+                      {(() => {
+                        const images = getImagesFromText(chat.text);
+                        if (images.length === 0) return null;
+                        return (
+                          <div className="mt-3 flex flex-col gap-3">
+                            {images.map((url, idx) => (
+                              <div key={idx} className="overflow-hidden rounded-lg border border-divider/50 shadow-sm bg-black/5 min-h-[40px] flex items-center justify-center">
+                                <img
+                                  src={url}
+                                  alt="Generated content"
+                                  className="max-w-full h-auto object-contain block hover:scale-[1.02] transition-transform duration-300"
+                                  loading="lazy"
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      })()}
                     </div>
                   </div>
                 ))

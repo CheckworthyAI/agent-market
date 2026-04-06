@@ -42,6 +42,15 @@ function ThinkingDots() {
 const fmt = (d: Date) =>
   d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
+const IMAGE_REGEX = /(https?:\/\/[^\s\)]+\.(?:png|jpg|jpeg|gif|webp|svg|bmp)(?:\?[^\s\)]*)?)|(https:\/\/storage\.googleapis\.com\/[^\s\)]+)/gi;
+
+function getImagesFromText(text: string): string[] {
+  if (!text) return [];
+  // Heal fragmented URLs: remove newlines that break a path
+  const healed = text.replace(/([a-zA-Z0-9\-\._~%:\/\?#\[\]@!$&'\(\)\*\+,;=])\n\s*([a-zA-Z0-9\-\._~%:\/\?#\[\]@!$&'\(\)\*\+,;=])/g, '$1$2');
+  return healed.match(IMAGE_REGEX) || [];
+}
+
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
@@ -134,13 +143,23 @@ export default function A2AChat({
           setLoadingState("streaming");
           isFirstChunk = false;
         }
-        if (chunk) {
-          setMessages((prev) =>
-            prev.map((m) =>
-              m.id === agentId ? { ...m, text: m.text + chunk } : m
-            )
-          );
-        }
+
+        setMessages((prev) =>
+          prev.map((m) => {
+            if (m.id !== agentId) return m;
+            let nextText = m.text;
+            let nextImages = m.images || [];
+
+            if (chunk.text) {
+              nextText += chunk.text;
+            }
+            if (chunk.image && !nextImages.includes(chunk.image)) {
+              nextImages = [...nextImages, chunk.image];
+            }
+
+            return { ...m, text: nextText, images: nextImages };
+          })
+        );
       }
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Something went wrong";
@@ -236,24 +255,36 @@ export default function A2AChat({
                     ) : (
                       <>
                         {/* 1. Render the text content */}
-                        <div className="mb-2">{m.text || "…"}</div>
+                        <div className="mb-0.5">{m.text || "…"}</div>
 
-                        {/* 2. Check for GCS Image URLs and render them */}
-                        {m.text?.includes("storage.googleapis.com") &&
-                          m.text.match(/https:\/\/storage\.googleapis\.com\/[^\s)]+/g)?.map((url, idx) => (
-                            <div key={idx} className="mt-3 overflow-hidden rounded-lg border border-divider/50 shadow-sm bg-black/5">
-                              <img
-                                src={url}
-                                alt="Generated Anime"
-                                className="max-w-full h-auto object-contain block hover:scale-[1.02] transition-transform duration-300"
-                                loading="lazy"
-                                onError={(e) => {
-                                  // Hide if blocked by CORS or permissions
-                                  (e.target as HTMLImageElement).parentElement!.style.display = 'none';
-                                }}
-                              />
+                        {/* 2. Render structured images and detected URLs */}
+                        {(() => {
+                          const detectedUrls = getImagesFromText(m.text);
+                          const combined = Array.from(new Set([...(m.images || []), ...detectedUrls]));
+                          if (combined.length === 0) return null;
+
+                          return (
+                            <div className="mt-3 flex flex-col gap-3">
+                              {combined.map((url, idx) => (
+                                <div key={idx} className="overflow-hidden rounded-lg border border-divider/50 shadow-sm bg-black/5 min-h-[40px] flex items-center justify-center">
+                                  <img
+                                    src={url}
+                                    alt="Chat attachment"
+                                    className="max-w-full h-auto object-contain block hover:scale-[1.02] transition-transform duration-300"
+                                    loading="lazy"
+                                    onError={(e) => {
+                                      // If we're currently streaming this message, don't hide it yet
+                                      // as the URL might be incomplete.
+                                      if (!isStreaming) {
+                                        (e.target as HTMLImageElement).parentElement!.style.display = 'none';
+                                      }
+                                    }}
+                                  />
+                                </div>
+                              ))}
                             </div>
-                          ))}
+                          );
+                        })()}
                       </>
                     )}
                   </div>
