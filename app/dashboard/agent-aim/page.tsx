@@ -937,7 +937,6 @@ export default function AgentAimPage() {
           body: JSON.stringify({ 
             messages: apiMessages,
             agentUrl: selectedAgent?.cloud_run_url,
-            agentName: selectedAgent?.name || "agent"
           }),
         });
 
@@ -1366,18 +1365,15 @@ export default function AgentAimPage() {
         >
           <div className="pointer-events-auto flex items-center">
             <Dropdown>
-              <Dropdown.Trigger>
-                <Button
-                  variant="ghost"
-                  className="h-10 gap-2 rounded-full px-3 font-semibold hover:bg-[var(--sidebar-item-hover)] group border-none"
-                  aria-label="Select Agent"
-                >
-                  <IconAgentsMenu className="h-5 w-5 shrink-0 text-default-600 dark:text-default-400" />
-                  <span className="max-w-[120px] truncate text-sm">
-                    {selectedAgent?.name || "Select Agent"}
-                  </span>
-                  <IconChevronDown className="opacity-50 group-data-[pressed=true]:rotate-180 transition-transform" />
-                </Button>
+              <Dropdown.Trigger
+                className="h-10 gap-2 rounded-full px-3 font-semibold hover:bg-[var(--sidebar-item-hover)] group border-none flex items-center cursor-pointer outline-none transition-colors text-foreground/90"
+                aria-label="Select Agent"
+              >
+                <IconAgentsMenu className="h-5 w-5 shrink-0 text-default-600 dark:text-default-400" />
+                <span className="max-w-[120px] truncate text-sm">
+                  {selectedAgent?.name || "Select Agent"}
+                </span>
+                <IconChevronDown className="opacity-50 group-data-[pressed=true]:rotate-180 transition-transform" />
               </Dropdown.Trigger>
               <Dropdown.Popover
                 placement="bottom start"
@@ -1387,16 +1383,37 @@ export default function AgentAimPage() {
                   aria-label="Agent selection"
                   disallowEmptySelection
                   selectionMode="single"
-                  selectedKeys={selectedAgentId ? [selectedAgentId] : []}
-                  onSelectionChange={(keys: any) => {
-                    const key = Array.from(keys)[0] as string;
-                    setSelectedAgentId(key);
+                  selectedKeys={selectedAgentId ? new Set([selectedAgentId]) : new Set([])}
+                  onSelectionChange={(keys) => {
+                    if (keys !== "all") {
+                      const key = Array.from(keys)[0] as string;
+                      if (key && key !== selectedAgentId) {
+                        setSelectedAgentId(key);
+                        // Reset chat if current session has history
+                        const activeSession = sessions.find((s) => s.id === activeId);
+                        if (activeSession && activeSession.messages.length > 0) {
+                          const newId = crypto.randomUUID();
+                          setSessions((prev) => [
+                            ...prev,
+                            {
+                              id: newId,
+                              title: "New chat",
+                              messages: [],
+                              updatedAt: Date.now(),
+                            },
+                          ]);
+                          setActiveId(newId);
+                        }
+                      }
+                    }
                   }}
                   className="gap-1 p-1"
                 >
                   {agents.map((agent) => (
                     <Dropdown.Item
                       key={agent.id}
+                      id={agent.id}
+                      textValue={agent.name}
                       className="rounded-xl py-2 data-[hovered=true]:bg-[var(--sidebar-item-hover)]"
                     >
                        <div className="flex flex-col gap-0.5">

@@ -7,7 +7,6 @@ export const maxDuration = 60;
 
 const ADK_BASE_URL =
   "https://planner-agent-475756125529.us-central1.run.app";
-"https://master-agent-475756125529.us-central1.run.app";
 const APP_NAME = "my_agent_new";
 
 export async function POST(request: Request) {
@@ -23,7 +22,6 @@ export async function POST(request: Request) {
   let body: { 
     messages?: { role: string; content: string }[];
     agentUrl?: string;
-    agentName?: string;
   };
   try {
     body = await request.json();
@@ -38,9 +36,10 @@ export async function POST(request: Request) {
     return Response.json({ error: "Empty message" }, { status: 400 });
   }
 
-  // Use provided agent details or fallback to defaults
+  // Use provided agent URL or fallback to default
   const activeAgentUrl = body.agentUrl || ADK_BASE_URL;
-  const activeAppName = body.agentName || APP_NAME;
+  // All current agents use the 'my_agent_new' folder in their repository
+  const activeAppName = APP_NAME;
 
   // Use the Supabase user ID as a stable ADK user ID
   const userId = `supabase-${user.id}`;
@@ -63,7 +62,7 @@ export async function POST(request: Request) {
     const sessionData = (await sessionRes.json()) as { id: string };
     sessionId = sessionData.id;
   } catch (e) {
-    return new Response(`Failed to reach ADK service at ${activeAgentUrl}: ${String(e)}`, {
+    return new Response(`Failed to reach ADK service: ${String(e)}`, {
       status: 502,
     });
   }
