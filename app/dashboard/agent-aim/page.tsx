@@ -9,8 +9,10 @@ import {
   Spinner,
   Tooltip,
   useOverlayState,
+  Avatar,
 } from "@heroui/react";
 import clsx from "clsx";
+import { createClient } from "@/utils/supabase/client";
 
 type Role = "user" | "assistant";
 
@@ -21,6 +23,13 @@ type ChatSession = {
   title: string;
   updatedAt: number;
   messages: Msg[];
+};
+
+type Agent = {
+  id: string;
+  name: string;
+  cloud_run_url: string;
+  description?: string;
 };
 
 const STORAGE_KEY = "agent-aim-chat-sessions-v1";
@@ -458,6 +467,25 @@ function IconTrash({ className }: { className?: string }) {
   );
 }
 
+function IconChevronDown({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      width={14}
+      height={14}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M6 9l6 6 6-6" />
+    </svg>
+  );
+}
+
 async function shareChatSession(s: ChatSession): Promise<void> {
   const lines = s.messages.map((m) =>
     `${m.role === "user" ? "You" : "Agent Aim"}: ${m.content}`,
@@ -505,6 +533,47 @@ export default function AgentAimPage() {
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editingDraft, setEditingDraft] = useState("");
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
+  
+  // Dynamic Agent Selection
+  const [agents, setAgents] = useState<Agent[]>([]);
+  const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
+  const [agentsLoading, setAgentsLoading] = useState(false);
+
+  const selectedAgent = useMemo(
+    () => agents.find((a) => a.id === selectedAgentId),
+    [agents, selectedAgentId],
+  );
+
+  useEffect(() => {
+    const fetchAgents = async () => {
+      setAgentsLoading(true);
+      const supabase = createClient();
+      try {
+        // Fetch from both tables
+        const [myAgentsRes, marketAgentsRes] = await Promise.all([
+          supabase.from("adk_agents").select("id, name, cloud_run_url, description"),
+          supabase.from("agent_market").select("id, name, cloud_run_url, description"),
+        ]);
+
+        const combined = [
+          ...(myAgentsRes.data || []),
+          ...(marketAgentsRes.data || []),
+        ];
+        
+        // Remove duplicates by ID or URL if necessary, but here we just combine
+        setAgents(combined);
+        
+        if (combined.length > 0) {
+          setSelectedAgentId(combined[0].id);
+        }
+      } catch (err) {
+        console.error("Failed to fetch agents:", err);
+      } finally {
+        setAgentsLoading(false);
+      }
+    };
+    fetchAgents();
+  }, []);
 
   const deleteDialog = useOverlayState({
     onOpenChange: (open) => {
@@ -865,7 +934,11 @@ export default function AgentAimPage() {
           headers: { "Content-Type": "application/json" },
           credentials: "include",
           signal: controller.signal,
-          body: JSON.stringify({ messages: apiMessages }),
+          body: JSON.stringify({ 
+            messages: apiMessages,
+            agentUrl: selectedAgent?.cloud_run_url,
+            agentName: selectedAgent?.name || "agent"
+          }),
         });
 
         if (!res.ok) {
@@ -1287,6 +1360,64 @@ export default function AgentAimPage() {
   return (
     <div className="-m-6 flex min-h-0 flex-1 flex-col overflow-hidden bg-[var(--background)]">
       <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
+        <div
+          className="pointer-events-none absolute left-4 top-4 z-10 flex gap-1 sm:left-6 sm:top-5 md:left-8"
+          aria-hidden={false}
+        >
+          <div className="pointer-events-auto flex items-center">
+            <Dropdown>
+              <Dropdown.Trigger>
+                <Button
+                  variant="ghost"
+                  className="h-10 gap-2 rounded-full px-3 font-semibold hover:bg-[var(--sidebar-item-hover)] group border-none"
+                  aria-label="Select Agent"
+                >
+                  <IconAgentsMenu className="h-5 w-5 shrink-0 text-default-600 dark:text-default-400" />
+                  <span className="max-w-[120px] truncate text-sm">
+                    {selectedAgent?.name || "Select Agent"}
+                  </span>
+                  <IconChevronDown className="opacity-50 group-data-[pressed=true]:rotate-180 transition-transform" />
+                </Button>
+              </Dropdown.Trigger>
+              <Dropdown.Popover
+                placement="bottom start"
+                className="min-w-[200px] rounded-2xl border border-divider bg-[var(--overlay)] p-1 shadow-[var(--overlay-shadow)]"
+              >
+                <Dropdown.Menu
+                  aria-label="Agent selection"
+                  disallowEmptySelection
+                  selectionMode="single"
+                  selectedKeys={selectedAgentId ? [selectedAgentId] : []}
+                  onSelectionChange={(keys: any) => {
+                    const key = Array.from(keys)[0] as string;
+                    setSelectedAgentId(key);
+                  }}
+                  className="gap-1 p-1"
+                >
+                  {agents.map((agent) => (
+                    <Dropdown.Item
+                      key={agent.id}
+                      className="rounded-xl py-2 data-[hovered=true]:bg-[var(--sidebar-item-hover)]"
+                    >
+                       <div className="flex flex-col gap-0.5">
+                        <span className="font-medium text-default-900">{agent.name}</span>
+                        {agent.description && (
+                          <span className="text-[10px] text-default-500 line-clamp-1">{agent.description}</span>
+                        )}
+                      </div>
+                    </Dropdown.Item>
+                  ))}
+                  {agents.length === 0 && (
+                     <Dropdown.Item key="no-agents" isDisabled className="text-default-400">
+                      No agents found
+                    </Dropdown.Item>
+                  )}
+                </Dropdown.Menu>
+              </Dropdown.Popover>
+            </Dropdown>
+          </div>
+        </div>
+
         <div
           className="pointer-events-none absolute right-4 top-4 z-10 flex gap-1 sm:right-6 sm:top-5"
           aria-hidden={false}

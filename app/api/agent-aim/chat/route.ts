@@ -7,6 +7,7 @@ export const maxDuration = 60;
 
 const ADK_BASE_URL =
   "https://planner-agent-475756125529.us-central1.run.app";
+"https://master-agent-475756125529.us-central1.run.app";
 const APP_NAME = "my_agent_new";
 
 export async function POST(request: Request) {
@@ -19,7 +20,11 @@ export async function POST(request: Request) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  let body: { messages?: { role: string; content: string }[] };
+  let body: { 
+    messages?: { role: string; content: string }[];
+    agentUrl?: string;
+    agentName?: string;
+  };
   try {
     body = await request.json();
   } catch {
@@ -33,6 +38,10 @@ export async function POST(request: Request) {
     return Response.json({ error: "Empty message" }, { status: 400 });
   }
 
+  // Use provided agent details or fallback to defaults
+  const activeAgentUrl = body.agentUrl || ADK_BASE_URL;
+  const activeAppName = body.agentName || APP_NAME;
+
   // Use the Supabase user ID as a stable ADK user ID
   const userId = `supabase-${user.id}`;
 
@@ -40,7 +49,7 @@ export async function POST(request: Request) {
   let sessionId: string;
   try {
     const sessionRes = await fetch(
-      `${ADK_BASE_URL}/apps/${APP_NAME}/users/${userId}/sessions`,
+      `${activeAgentUrl}/apps/${activeAppName}/users/${userId}/sessions`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -54,7 +63,7 @@ export async function POST(request: Request) {
     const sessionData = (await sessionRes.json()) as { id: string };
     sessionId = sessionData.id;
   } catch (e) {
-    return new Response(`Failed to reach ADK service: ${String(e)}`, {
+    return new Response(`Failed to reach ADK service at ${activeAgentUrl}: ${String(e)}`, {
       status: 502,
     });
   }
@@ -62,11 +71,11 @@ export async function POST(request: Request) {
   // 2. Stream the ADK response via SSE → pipe plain text back to the client
   let adkRes: Response;
   try {
-    adkRes = await fetch(`${ADK_BASE_URL}/run_sse`, {
+    adkRes = await fetch(`${activeAgentUrl}/run_sse`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        app_name: APP_NAME,
+        app_name: activeAppName,
         user_id: userId,
         session_id: sessionId,
         new_message: {
