@@ -6,7 +6,7 @@ import { createClient } from "@/utils/supabase/server";
 export const maxDuration = 60;
 
 const ADK_BASE_URL =
-  "https://master-agent-475756125529.us-central1.run.app";
+  "https://planner-agent-475756125529.us-central1.run.app";
 const APP_NAME = "my_agent_new";
 
 export async function POST(request: Request) {
