@@ -291,7 +291,7 @@ export default function AgentsPage() {
                           ID: {agent.id.slice(0, 8)}...
                         </span>
                         {agent.cloud_run_url && (
-                          <Tooltip content={agent.cloud_run_url}>
+                          <Tooltip>
                             <span className="text-[10px] text-primary/60 font-medium px-2 py-0.5 rounded bg-primary/5 cursor-help">
                               Deployed
                             </span>
