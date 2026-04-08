@@ -1,7 +1,8 @@
 "use client";
 
-import { Card, Button, Chip, Spinner } from "@heroui/react";
+import { Card, Button, Chip, Spinner, Tooltip } from "@heroui/react";
 import React, { useEffect, useState, useRef } from "react";
+import { RobotIcon } from "@/components/dashboard/icons";
 import { UserAgent } from "@/types/agent";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
@@ -260,65 +261,93 @@ export default function AgentsPage() {
           <p className="text-default-500">No active agents found.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-4 mt-4">
-          {agents.map((agent) => (
-            <Card
-              key={agent.id}
-              className="bg-surface border border-divider p-6 transition-colors hover:bg-surface-secondary"
-            >
-              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-default flex items-center justify-center text-foreground font-bold text-xl">
-                    {agent.name.charAt(0)}
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-default-900">
-                      {agent.name}
-                    </h3>
-                    <p className="text-xs text-default-500 font-mono">
-                      {agent.id}
-                    </p>
-                  </div>
-                </div>
+        <div className="flex flex-col gap-4 mt-2">
+          {agents.map((agent, idx) => {
+            const gradients = [
+              "bg-blue-500/10 text-blue-500",
+              "bg-purple-500/10 text-purple-500",
+              "bg-emerald-500/10 text-emerald-500",
+              "bg-orange-500/10 text-orange-500",
+              "bg-rose-500/10 text-rose-500",
+            ];
+            const colorClass = gradients[idx % gradients.length];
 
-                <div className="flex flex-wrap items-center gap-6">
-                  <div className="flex flex-col">
-                    <span className="text-[10px] uppercase tracking-wider text-default-400 font-bold mb-1">
-                      Status
-                    </span>
-                    {agent.checkingHealth ? (
-                      <div className="w-[60px] flex items-center justify-center h-[24px]">
-                        <Spinner size="sm" />
+            return (
+              <Card
+                key={agent.id}
+                className="bg-surface/30 border border-divider hover:border-primary/40 p-3.5 transition-all duration-300 group shadow-sm hover:shadow-lg hover:shadow-primary/5"
+              >
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                  <div className="flex items-center gap-4 min-w-0 flex-1">
+                    <div className={`w-11 h-11 rounded-xl ${colorClass} flex items-center justify-center border border-current/10 shadow-inner group-hover:scale-105 transition-transform duration-300`}>
+                      <RobotIcon size={24} />
+                    </div>
+                    <div className="flex flex-col min-w-0">
+                      <h3 className="text-lg font-bold text-default-900 group-hover:text-primary transition-colors truncate">
+                        {agent.name}
+                      </h3>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-[10px] text-default-400 font-mono bg-default-100/50 px-2 py-0.5 rounded flex items-center gap-1.5">
+                          ID: {agent.id.slice(0, 8)}...
+                        </span>
+                        {agent.cloud_run_url && (
+                          <Tooltip content={agent.cloud_run_url}>
+                            <span className="text-[10px] text-primary/60 font-medium px-2 py-0.5 rounded bg-primary/5 cursor-help">
+                              Deployed
+                            </span>
+                          </Tooltip>
+                        )}
                       </div>
-                    ) : (
-                      <Chip
-                        color={
-                          agent.status === "active"
-                            ? "success"
-                            : agent.status === "paused"
-                              ? "warning"
-                              : "default"
-                        }
-                        size="sm"
-                        variant="soft"
-                      >
-                        {agent.status}
-                      </Chip>
-                    )}
+                    </div>
                   </div>
 
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="border-divider"
-                    onClick={() => handleRun(agent)}
-                  >
-                    Run
-                  </Button>
+                  <div className="flex items-center gap-8 pl-0 md:pl-6 border-l-0 md:border-l border-divider/50 w-full md:w-auto">
+                    <div className="flex flex-col">
+                      <span className="text-[10px] uppercase tracking-wider text-default-400 font-bold mb-1.5 flex items-center gap-1">
+                        Status
+                      </span>
+                      {agent.checkingHealth ? (
+                        <div className="w-[80px] flex items-center gap-2 h-[28px]">
+                          <Spinner size="sm" color="current" />
+                          <span className="text-xs text-default-400">Checking</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <span className="relative flex h-2 w-2">
+                            <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${agent.status === "active" ? "bg-success" : "bg-warning"}`}></span>
+                            <span className={`relative inline-flex rounded-full h-2 w-2 ${agent.status === "active" ? "bg-success" : "bg-warning"}`}></span>
+                          </span>
+                          <Chip
+                            color={
+                              agent.status === "active"
+                                ? "success"
+                                : agent.status === "paused"
+                                  ? "warning"
+                                  : "default"
+                            }
+                            size="sm"
+                            variant="soft"
+                            className="font-bold border-0 h-6"
+                          >
+                            {agent.status}
+                          </Chip>
+                        </div>
+                      )}
+                    </div>
+
+                    <Button
+                      size="sm"
+                      variant="primary"
+                      className="font-bold px-6 h-9 shadow-md shadow-primary/20 hover:shadow-primary/30 hover:scale-[1.02] active:scale-[0.98] transition-all ml-auto md:ml-0"
+                      onClick={() => handleRun(agent)}
+                    >
+                      Run Agent
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            </Card>
-          ))}
+              </Card>
+            );
+          })}
         </div>
       )}
 
@@ -327,25 +356,28 @@ export default function AgentsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-background border border-divider rounded-2xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200">
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-divider">
+            <div className="flex items-center justify-between p-4 border-b border-divider bg-background/50 backdrop-blur-md sticky top-0 z-10">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center text-primary font-bold text-lg">
-                  {activeAgent?.name.charAt(0)}
+                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-inner border border-primary/20">
+                  <RobotIcon size={24} />
                 </div>
                 <div className="flex flex-col">
-                  <span className="font-bold text-default-900">
+                  <span className="font-bold text-default-900 text-lg leading-tight">
                     {activeAgent?.name}
                   </span>
-                  <span className="text-[10px] text-default-400 font-mono truncate max-w-[280px]">
-                    {activeAgent?.cloud_run_url ?? "No URL configured"}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-success animate-pulse" />
+                    <span className="text-[10px] text-default-400 font-mono truncate max-w-[240px]">
+                      {activeAgent?.cloud_run_url ?? "No URL configured"}
+                    </span>
+                  </div>
                 </div>
               </div>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setIsOpen(false)}
-                className="min-w-0 p-2"
+                className="min-w-0 p-2 rounded-full hover:bg-default-100 transition-colors"
               >
                 ✕
               </Button>
@@ -410,11 +442,11 @@ export default function AgentsPage() {
             </div>
 
             {/* Input */}
-            <div className="p-4 border-t border-divider bg-background/50">
-              <div className="flex w-full gap-2 items-center">
+            <div className="p-5 border-t border-divider bg-background/80 backdrop-blur-md">
+              <div className="flex w-full gap-3 items-center">
                 <input
-                  className="flex-grow bg-divider/20 border border-divider/50 rounded-xl px-4 py-3 text-sm outline-none focus:border-primary/50 transition-colors disabled:opacity-50"
-                  placeholder="Type your message..."
+                  className="flex-grow bg-divider/10 border border-divider rounded-xl px-5 py-3 text-sm outline-none focus:border-primary/60 transition-all shadow-inner disabled:opacity-50"
+                  placeholder={`Chat with ${activeAgent?.name || "your agent"}...`}
                   value={userInput}
                   onChange={(e) => setUserInput(e.target.value)}
                   onKeyDown={(e) =>
@@ -424,7 +456,7 @@ export default function AgentsPage() {
                 />
                 <Button
                   variant="primary"
-                  className="h-11 px-6 shadow-lg shadow-primary/20"
+                  className="h-11 px-8 font-bold shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all hover:scale-[1.02] active:scale-[0.98]"
                   isDisabled={isStreaming || !userInput.trim()}
                   onClick={sendMessage}
                 >

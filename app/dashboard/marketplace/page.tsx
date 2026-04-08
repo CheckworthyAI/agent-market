@@ -91,6 +91,7 @@ export default function MarketplacePage() {
   const router = useRouter();
   const [marketAgents, setMarketAgents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [userAgentUrls, setUserAgentUrls] = useState<Set<string>>(new Set());
   const [presets, setPresets] = useState<any[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [prefillAgent, setPrefillAgent] = useState<any | null>(null);
@@ -122,12 +123,31 @@ export default function MarketplacePage() {
       setLoading(true);
       await Promise.all([
         fetchMarketAgents(),
-        fetchPresets()
+        fetchPresets(),
+        fetchUserAgents()
       ]);
       setLoading(false);
     };
     init();
   }, []);
+
+  const fetchUserAgents = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from("adk_agents")
+        .select("cloud_run_url")
+        .eq("user_id", user.id);
+
+      if (error) throw error;
+      const urls = new Set(data?.map(a => a.cloud_run_url).filter(Boolean));
+      setUserAgentUrls(urls);
+    } catch (error) {
+      console.error("Failed to fetch user agents for collection check:", error);
+    }
+  };
 
   const fetchPresets = async () => {
     try {
@@ -172,6 +192,15 @@ export default function MarketplacePage() {
 
       if (error) {
         throw new Error(error.message);
+      }
+
+      // Update local state to reflect the addition immediately
+      if (agent.cloud_run_url) {
+        setUserAgentUrls(prev => {
+          const next = new Set(Array.from(prev));
+          next.add(agent.cloud_run_url);
+          return next;
+        });
       }
 
       setJustAdded(agent.id);
@@ -376,7 +405,7 @@ export default function MarketplacePage() {
                   </div>
 
                   {/* Card Content */}
-                  <div className="p-6 flex flex-col flex-1 gap-4">
+                  <div className="p-3 flex flex-col flex-1 gap-3">
                     <div className="flex flex-col gap-1.5">
                       <h3 className="text-xl font-bold text-default-900 leading-tight group-hover:text-primary transition-colors">
                         {agent.name}
@@ -399,7 +428,7 @@ export default function MarketplacePage() {
                     </div>
 
                     {/* Footer Actions */}
-                    <div className="flex justify-between items-center mt-auto pt-4 border-t border-divider/50">
+                    <div className="flex justify-between items-center mt-auto pt-3 border-t border-divider/50">
                       <Button
                         size="sm"
                         variant="ghost"
@@ -412,17 +441,17 @@ export default function MarketplacePage() {
                       </Button>
                       <Button
                         size="md"
-                        variant={justAdded === agent.id ? "ghost" : "primary"}
-                        className={`font-bold transition-all duration-300 px-6 ${justAdded === agent.id
+                        variant={justAdded === agent.id || userAgentUrls.has(agent.cloud_run_url) ? "ghost" : "primary"}
+                        className={`font-bold transition-all duration-300 px-6 ${justAdded === agent.id || userAgentUrls.has(agent.cloud_run_url)
                           ? "bg-success/10 text-success border-success/20"
                           : "bg-primary text-primary-foreground shadow-md hover:shadow-primary/20"
                           }`}
-                        isDisabled={addingToMyAgents === agent.id}
+                        isDisabled={addingToMyAgents === agent.id || userAgentUrls.has(agent.cloud_run_url)}
                         onClick={() => handleAddToMyAgents(agent)}
                       >
                         {addingToMyAgents === agent.id ? (
                           <Spinner size="sm" color="current" />
-                        ) : justAdded === agent.id ? (
+                        ) : (justAdded === agent.id || userAgentUrls.has(agent.cloud_run_url)) ? (
                           "Added ✓"
                         ) : (
                           "Add Agent"
